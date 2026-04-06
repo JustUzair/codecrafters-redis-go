@@ -9,6 +9,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
 	"github.com/codecrafters-io/redis-starter-go/app/lib/commands"
+	_ "github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
 func main() {
@@ -53,6 +54,10 @@ func handleConn(conn net.Conn) {
 			commands.HandlePING(conn)
 		case "ECHO":
 			commands.HandleECHO(conn, args[1])
+		case "SET":
+			commands.HandleSET(conn, args[1], args[2])
+		case "GET":
+			commands.HandleGET(conn, args[1])
 
 		}
 
