@@ -67,6 +67,6 @@ func (s *Storage[T]) Get(key string) (T, error) {
 	return val.Value, nil
 }
 
-var Cache = &Storage[string]{
-	store: make(map[string]Value[string]),
+var Cache = &Storage[any]{
+	store: make(map[string]Value[any]),
 }

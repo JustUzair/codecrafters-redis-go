@@ -14,5 +14,9 @@ func HandleGET(conn net.Conn, key string) {
 		return
 	}
 	// Format: $length\r\ndata\r\n
-	conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)))
+	switch v := val.(type) {
+	case string:
+		conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(v), v)))
+	}
+
 }
