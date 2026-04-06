@@ -74,10 +74,6 @@ func ReadBulk(reader *bufio.Reader) (string, error) {
 	if prefix != '$' {
 		return "", fmt.Errorf("expected $, got `%c`", prefix)
 	}
-	// if err != nil {
-	// 	return ([]byte(""), err)
-	// } // Exit loop if client disconnects
-
 	sizes, _ := reader.ReadBytes('\n')
 	size, _ := strconv.Atoi(strings.TrimSuffix(string(sizes), "\r\n"))
 	data := make([]byte, size)
