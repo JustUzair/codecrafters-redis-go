@@ -1,7 +1,12 @@
 package commands
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 func HandlePING(conn net.Conn) {
-	conn.Write([]byte("+PONG\r\n"))
+	val := "+PONG\r\n"
+	conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)))
+
 }

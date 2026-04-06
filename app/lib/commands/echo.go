@@ -1,7 +1,10 @@
 package commands
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 func HandleECHO(conn net.Conn, val string) {
-	conn.Write([]byte(val))
+	conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)))
 }
