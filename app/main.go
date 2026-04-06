@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
 	"github.com/codecrafters-io/redis-starter-go/app/lib/commands"
@@ -55,7 +57,27 @@ func handleConn(conn net.Conn) {
 		case "ECHO":
 			commands.HandleECHO(conn, args[1])
 		case "SET":
-			commands.HandleSET(conn, args[1], args[2])
+			if len(args) >= 5 {
+				var isDeadlineMillis bool
+
+				if strings.ToUpper(args[3]) == "PX" {
+					isDeadlineMillis = true
+				} else if strings.ToUpper(args[3]) == "MX" {
+					isDeadlineMillis = false
+				} else {
+					fmt.Printf("Invalid Deadline Parameter %c\n", args[3])
+					break
+				}
+				expiry, err := strconv.ParseInt(args[4], 10, 64)
+				if err != nil {
+					fmt.Printf("Error while parsing deadline: %c\n", args[4])
+					break
+				}
+				commands.HandleSET(conn, args[1], args[2], expiry, isDeadlineMillis)
+			} else {
+				commands.HandleSET(conn, args[1], args[2], -1, false)
+
+			}
 		case "GET":
 			commands.HandleGET(conn, args[1])
 
