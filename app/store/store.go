@@ -30,12 +30,12 @@ func (s *Storage[T]) Set(key string, value T, expiry int64, isDeadlineMillis boo
 	}
 
 	var deadline int64
-	deadline = int64(time.Now().Unix())
+	now := time.Now().UnixMilli()
 
 	if isDeadlineMillis {
-		deadline = int64((time.Now().Unix() * 1000) + expiry) //expiry is in ms
+		deadline = now + expiry //expiry is in ms
 	} else {
-		deadline = int64(time.Now().Unix() + expiry) // expiry is in secs
+		deadline = now + (expiry * 1000) // expiry is in secs
 	}
 	s.store[key] = Value[T]{
 		Value:            value,
@@ -59,8 +59,8 @@ func (s *Storage[T]) Get(key string) (T, error) {
 		return val.Value, nil
 	}
 	var isDeadlineMillis bool = val.IsDeadlineMillis
-	var currentTime int64 = time.Now().Unix()
-	if ok && (isDeadlineMillis && currentTime*1000 > deadline) || (!isDeadlineMillis && currentTime > deadline) {
+	var currentTime int64 = time.Now().UnixMilli()
+	if ok && (isDeadlineMillis && currentTime >= deadline) || (!isDeadlineMillis && currentTime >= deadline*1000) {
 		return zero, fmt.Errorf("Key expired")
 	}
 
