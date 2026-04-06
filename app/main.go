@@ -14,13 +14,14 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
+	fmt.Printf("Server started at %v\n", l.Addr())
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			continue
 		}
-		fmt.Println("TCP Handshake Successful...")
+		// fmt.Println("TCP Handshake Successful...")
 		go handleConn(conn)
 	}
 
@@ -35,7 +36,7 @@ func handleConn(conn net.Conn) {
 		_, err := conn.Read(buf[:])
 		if err != nil {
 			if err == io.EOF {
-				fmt.Println("Client closed the connection")
+				// fmt.Println("Client closed the connection")
 				break
 			}
 			fmt.Println("Error reading: ", err.Error())
