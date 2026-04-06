@@ -46,8 +46,8 @@ func handleConn(conn net.Conn) {
 			return
 		}
 
-		fmt.Println("Args %v", args)
-		fmt.Println("Err %v", err)
+		// fmt.Println("Args %v", args)
+		// fmt.Println("Err %v", err)
 		command := args[0]
 		switch command {
 		case "PING":
