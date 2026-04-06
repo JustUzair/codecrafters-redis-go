@@ -26,10 +26,14 @@ set-expiry-secs:
 	redis-cli SET foo bar MX 10
 
 # 4. List Tests (RPUSH)
-rpush-test:
+rpush:
 	@echo "📥 Testing RPUSH..."
 	redis-cli RPUSH my_list "item1"
 	redis-cli RPUSH my_list "item2"
+rpush-multi:
+	@echo "📥 Testing RPUSH..."
+	redis-cli RPUSH my_list "item1"
+	redis-cli RPUSH my_list "item2" "item3" "item4"
 
 # 5. Combined Stress Test (The "Full Circuit")
 test-all: set set-expiry-millis rpush-test
