@@ -5,6 +5,12 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
+
+	_ "strings"
+
+	"github.com/codecrafters-io/redis-starter-go/app/lib/commands"
+	_ "github.com/codecrafters-io/redis-starter-go/app/lib/commands"
 )
 
 func main() {
@@ -33,7 +39,7 @@ func handleConn(conn net.Conn) {
 	defer conn.Close()
 	for {
 		buf := make([]byte, 1024)
-		_, err := conn.Read(buf[:])
+		n, err := conn.Read(buf[:])
 		if err != nil {
 			if err == io.EOF {
 				// fmt.Println("Client closed the connection")
@@ -43,7 +49,20 @@ func handleConn(conn net.Conn) {
 			return
 		}
 
-		conn.Write([]byte("+PONG\r\n"))
+		if n > 0 {
+			var str string = string(buf[:n])
+			if strings.Contains(str, "PING") {
+				commands.HandlePING(conn)
+			} else if strings.Contains(str, "ECHO") {
+				vals := strings.Split(str, " ")
+				commands.HandleECHO(conn, vals[1])
+			} else {
+				fmt.Println("Unsupported Command")
+				os.Exit(1)
+			}
+
+		}
 
 	}
+
 }
