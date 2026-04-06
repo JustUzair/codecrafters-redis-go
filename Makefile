@@ -1,25 +1,36 @@
-
 # 1. Start the server (Uses your existing shell script)
 run:
 	@echo "🚀 Starting Redis Server..."
 	./your_program.sh
-# 2. PING and setup TCP handshaking
-# 2. Test a single PING (Handshake test)
+
+# 2. Basic Tests
 ping:
-# 	@echo "Testing Single PING..."
-# 	@echo -e "PING\r\n" | nc localhost 6379
-	@printf '$$4\r\nPING\r\n' | nc localhost 6379
+	redis-cli PING
 
 echo:
-	@printf "*2\r\n\$$4\r\nECHO\r\n\$$3\r\nhey\r\n" | nc localhost 6379
+	redis-cli ECHO hey
+
+# 3. String & Expiry Tests
+set:
+	redis-cli SET foo bar
 
 get:
-	@printf 'redis-cli GET foo'
-set:
-	@printf 'redis-cli SET foo bar'
+	redis-cli GET foo
+
 set-expiry-millis:
-	@echo -e "Setting key for 10000ms"
-	@printf 'redis-cli SET foo bar PX 10000'
+	@echo "🕒 Setting key 'foo' with 3000ms expiry..."
+	redis-cli SET foo bar PX 3000
+
 set-expiry-secs:
-	@echo -e "Setting key for 10s"
-	@printf 'redis-cli SET foo bar MX 10"
+	@echo "🕒 Setting key 'foo' with 10s expiry (using your MX flag)..."
+	redis-cli SET foo bar MX 10
+
+# 4. List Tests (RPUSH)
+rpush-test:
+	@echo "📥 Testing RPUSH..."
+	redis-cli RPUSH my_list "item1"
+	redis-cli RPUSH my_list "item2"
+
+# 5. Combined Stress Test (The "Full Circuit")
+test-all: set set-expiry-millis rpush-test
+	@echo "✅ All manual tests triggered."

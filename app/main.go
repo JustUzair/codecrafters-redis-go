@@ -56,7 +56,7 @@ func handleConn(conn net.Conn) {
 		case "ECHO":
 			commands.HandleECHO(conn, args[1])
 		case "RPUSH":
-			commands.HandleRPUSH(conn)
+			commands.HandleRPUSH(conn, args[1], args[2])
 		case "SET":
 			if len(args) >= 5 {
 				var isDeadlineMillis bool

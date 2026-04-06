@@ -67,6 +67,28 @@ func (s *Storage[T]) Get(key string) (T, error) {
 	return val.Value, nil
 }
 
+func (s *Storage[T]) RPush(list_key string, value string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var list []string
+	entry, ok := s.store[list_key]
+	if ok {
+		var temp any = entry.Value
+		list, ok = temp.([]string)
+		if !ok {
+			// Not a list type
+			return -1
+		}
+	}
+	list = append(list, value)
+	s.store[list_key] = Value[T]{
+		Value:            any(list).(T),
+		Deadline:         -1,
+		IsDeadlineMillis: false,
+	}
+	return len(list)
+}
+
 var Cache = &Storage[any]{
 	store: make(map[string]Value[any]),
 }
