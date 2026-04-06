@@ -18,4 +18,15 @@ func main() {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
+
+	// Step-2 Accept client connection and write the buffer
+
+	conn,err  := l.Accept()
+	if(err == nil){
+		fmt.Println("TCP Handshaking failed!!!")
+		os.Exit(1)
+	}
+	fmt.Println("TCP Handshake Successful...")
+
+	conn.Write([]byte("+PONG\r\n"))
 }
