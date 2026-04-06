@@ -7,7 +7,8 @@ run:
 # 2. Test a single PING (Handshake test)
 ping:
 # 	@echo "Testing Single PING..."
-	@echo -e "PING\r\n" | nc localhost 6379
+# 	@echo -e "PING\r\n" | nc localhost 6379
+	@printf '$$4\r\nPING\r\n' | nc localhost 6379
 
 echo:
-	@echo "ECHO hey!"  | nc localhost 6379
+	@printf "*2\r\n\$$4\r\nECHO\r\n\$$3\r\nhey\r\n" | nc localhost 6379
