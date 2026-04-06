@@ -13,7 +13,7 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
-	_, err = l.Accept()
+	conn, err := l.Accept()
 	if err != nil {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
@@ -21,12 +21,11 @@ func main() {
 
 	// Step-2 Accept client connection and write the buffer
 
-	conn,err  := l.Accept()
 	if(err == nil){
 		fmt.Println("TCP Handshaking failed!!!")
 		os.Exit(1)
 	}
-	fmt.Println("TCP Handshake Successful...")
+	// fmt.Println("TCP Handshake Successful...")
 
 	conn.Write([]byte("+PONG\r\n"))
 }
