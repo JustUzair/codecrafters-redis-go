@@ -70,7 +70,7 @@ func UnmarshalRESP(reader *bufio.Reader) ([]string, error) {
 func ReadBulk(reader *bufio.Reader) (string, error) {
 	// consume $ prefix
 	prefix, _ := reader.ReadByte()
-	fmt.Println("expected $, got `%c`", prefix)
+	// fmt.Println("expected $, got `%c`", prefix)
 	if prefix != '$' {
 		return "", fmt.Errorf("expected $, got `%c`", prefix)
 	}
