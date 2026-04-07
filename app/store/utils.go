@@ -230,7 +230,7 @@ func (s *Storage[T]) BLPop(list_key string, timeout float64) ([]any, error) {
 
 	var timeoutChannel <-chan time.Time
 	if timeout != 0 {
-		timeoutChannel = time.After(time.Duration(timeout) * time.Second)
+		timeoutChannel = time.After(time.Duration(timeout) * time.Second * time.Millisecond)
 	} else {
 		// how to wait indefinitely
 	}
