@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Sample RESP string: *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
+// Example RESP string: *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 func UnmarshalRESP(reader *bufio.Reader) ([]string, error) {
 	firstByte, err := reader.ReadByte()
 	if err != nil {
@@ -64,6 +64,7 @@ func ReadBulk(reader *bufio.Reader) (string, error) {
 }
 
 /*
+Example of RESP Array:
 
 *3\r\n
 $1\r\n
