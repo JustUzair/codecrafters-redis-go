@@ -78,7 +78,15 @@ func handleConn(conn net.Conn) {
 			commands.HandleLLEN(conn, list_key)
 		case "LPOP":
 			list_key := args[1]
-			commands.HandleLPOP(conn, list_key)
+			var n_pop int = 1
+			if len(args) == 3 {
+				n_pop, err = strconv.Atoi(args[2])
+				if err != nil {
+					fmt.Printf("Invalid argument for number of elements to pop")
+					break
+				}
+			}
+			commands.HandleLPOP(conn, list_key, n_pop)
 		case "SET":
 			key := args[1]
 			value := args[2]

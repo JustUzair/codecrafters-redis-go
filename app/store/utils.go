@@ -163,24 +163,32 @@ func (s *Storage[T]) LLen(list_key string) int {
 
 }
 
-func (s *Storage[T]) LPop(list_key string) (any, error) {
+func (s *Storage[T]) LPop(list_key string, n_pop int) ([]any, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
 	entry, ok := s.store[list_key]
 	if !ok {
 		return nil, fmt.Errorf("key not found")
 	}
 	var list []any
 	list = any(entry.Value).([]any) // for popping value must be any[] list
-	elememt := list[0]
-	newList := list[1:]
+	if n_pop > len(list) {
+		n_pop = len(list)
+		emptyList := make([]any, 0)
+		delete(s.store, list_key)
+		return emptyList, nil
+	}
+
+	var elements []any
+	elements = list[:n_pop]
+	// 0 1 2 3 4 5, n_pop = 2, list [2 : ] ===> correct
+	newList := list[n_pop:]
 
 	s.store[list_key] = Value[T]{
 		Value:            any(newList).(T),
 		Deadline:         entry.Deadline,
 		IsDeadlineMillis: entry.IsDeadlineMillis,
 	}
-	return elememt, nil
+	return elements, nil
 
 }
