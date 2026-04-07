@@ -90,9 +90,6 @@ func (s *Storage[T]) RPush(list_key string, value string) int {
 }
 
 func (s *Storage[T]) LRange(list_key string, start int64, stop int64) []string {
-	// keys := slices.Collect(maps.Values(Cache.store))
-	// var keyLen64 int64 = int64(len(keys))
-
 	temp, err := Cache.Get(list_key)
 
 	defaultValue := make([]string, 0)
@@ -104,10 +101,17 @@ func (s *Storage[T]) LRange(list_key string, start int64, stop int64) []string {
 	vals, ok := temp.([]string)
 	if !ok {
 		// wrong type
-		// fmt.Errorf("WRONGTYPE values returned for given key isn't an array")
 		return defaultValue
 	}
 	var valueLen64 int64 = int64(len(vals))
+
+	// a,b,c,d,e
+	if start < 0 {
+		start = valueLen64 + start // 5 + (-2) = 3
+	}
+	if stop < 0 {
+		stop = valueLen64 + stop // 5 + (-1) = 4
+	}
 
 	/*
 		The LRANGE command has several behaviors to keep in mind:
