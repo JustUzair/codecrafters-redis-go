@@ -38,11 +38,8 @@ lrange-pos:
 	redis-cli LRANGE list_key 0 2
 	redis-cli LRANGE list_key 2 4
 lrange-neg:
-	redis-cli RPUSH list_key "a" "b" "c" "d" "e"
-# List the last 2 items 
-	redis-cli LRANGE list_key -2 -1
-# List all items except the last 2
-	redis-cli LRANGE list_key 0 -3
+	redis-cli RPUSH banana pear grape pineapple apple strawberry orange raspberry
+	redis-cli LRANGE banana -8 -1
 
 # 5. Combined Stress Test (The "Full Circuit")
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg

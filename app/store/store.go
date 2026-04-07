@@ -107,10 +107,18 @@ func (s *Storage[T]) LRange(list_key string, start int64, stop int64) []string {
 
 	// a,b,c,d,e
 	if start < 0 {
-		start = valueLen64 + start // 5 + (-2) = 3
+		start = valueLen64 + start // ex: 5 + (-2) = 3
 	}
 	if stop < 0 {
-		stop = valueLen64 + stop // 5 + (-1) = 4
+		stop = valueLen64 + stop // ex: 5 + (-1) = 4
+	}
+
+	//  Clamp the indices if deduction introduced out of bounds index
+	if start < 0 {
+		start = 0
+	}
+	if stop < 0 {
+		stop = 0
 	}
 
 	/*
