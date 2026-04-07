@@ -4,29 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 )
-
-const (
-	STRING  = '+'
-	ERROR   = '-'
-	INTEGER = ':'
-	BULK    = '$'
-	ARRAY   = '*'
-)
-
-type Value struct {
-	typ   string
-	str   string
-	num   int
-	bulk  string
-	array []Value
-}
-
-type Resp struct {
-}
 
 // Sample RESP string: *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 func UnmarshalRESP(reader *bufio.Reader) ([]string, error) {
@@ -36,8 +16,7 @@ func UnmarshalRESP(reader *bufio.Reader) ([]string, error) {
 	} // Exit loop if client disconnects
 	if firstByte != '$' && firstByte != '*' {
 		// fmt.Printf("Expected '$', but got: %q (ASCII: %v)\n", firstByte, firstByte)
-		fmt.Println("Expecting string to start with '$' or '*'")
-		os.Exit(1)
+		return nil, fmt.Errorf("Expecting string to start with '$' or '*'")
 	}
 
 	if firstByte == '*' { // *
@@ -82,4 +61,25 @@ func ReadBulk(reader *bufio.Reader) (string, error) {
 
 	command := string(data)
 	return command, nil
+}
+
+/*
+
+*3\r\n
+$1\r\n
+a\r\n
+$1\r\n
+b\r\n
+$1\r\n
+c\r\n
+*/
+
+func MarshalArrayRESP(values []string) string {
+	var dataResp []string
+	lenResp := fmt.Sprintf("*%d\r\n", len(values))
+	dataResp = append(dataResp, lenResp)
+	for _, str := range values {
+		dataResp = append(dataResp, fmt.Sprintf("$%d\r\n%s\r\n", len(str), str))
+	}
+	return strings.Join(dataResp, "")
 }

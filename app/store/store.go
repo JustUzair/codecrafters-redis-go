@@ -89,6 +89,45 @@ func (s *Storage[T]) RPush(list_key string, value string) int {
 	return len(list)
 }
 
+func (s *Storage[T]) LRange(list_key string, start int64, stop int64) []string {
+	// keys := slices.Collect(maps.Values(Cache.store))
+	// var keyLen64 int64 = int64(len(keys))
+
+	temp, err := Cache.Get(list_key)
+
+	defaultValue := make([]string, 0)
+	if err != nil {
+		// KV pair doesnt exist
+		return defaultValue
+	}
+	var vals []string
+	vals, ok := temp.([]string)
+	if !ok {
+		// wrong type
+		// fmt.Errorf("WRONGTYPE values returned for given key isn't an array")
+		return defaultValue
+	}
+	var valueLen64 int64 = int64(len(vals))
+
+	/*
+		The LRANGE command has several behaviors to keep in mind:
+
+		If the list doesn't exist, an empty array is returned.
+		If the start index is greater than or equal to the list's length, an empty array is returned.
+		If the stop index is greater than or equal to the list's length, the stop index is treated as the last element.
+		If the start index is greater than the stop index, an empty array is returned.
+
+	*/
+	if start >= valueLen64 || valueLen64 == 0 {
+		return defaultValue
+	} else if stop >= valueLen64 {
+		stop = valueLen64 - 1 // We return by incrementing  stop + 1 for inclusiveness we reduce by 1 so the return doesn't go out of bounds
+	} else if start > stop {
+		return defaultValue
+	}
+	return vals[start : stop+1]
+}
+
 var Cache = &Storage[any]{
 	store: make(map[string]Value[any]),
 }

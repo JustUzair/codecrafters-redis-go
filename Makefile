@@ -27,14 +27,17 @@ set-expiry-secs:
 
 # 4. List Tests (RPUSH)
 rpush:
-	@echo "📥 Testing RPUSH..."
 	redis-cli RPUSH my_list "item1"
 	redis-cli RPUSH my_list "item2"
 rpush-multi:
-	@echo "📥 Testing RPUSH..."
 	redis-cli RPUSH my_list "item1"
 	redis-cli RPUSH my_list "item2" "item3" "item4"
+	redis-cli RPUSH list_key "a" "b" "c" "d" "e"
+lrange:
+	redis-cli RPUSH list_key "a" "b" "c" "d" "e"
+	redis-cli LRANGE list_key 0 2
+	redis-cli LRANGE list_key 2 4
 
 # 5. Combined Stress Test (The "Full Circuit")
-test-all: set set-expiry-millis rpush-test
+test-all: set set-expiry-millis rpush rpush-multi lrange
 	@echo "✅ All manual tests triggered."

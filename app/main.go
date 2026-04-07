@@ -44,7 +44,7 @@ func handleConn(conn net.Conn) {
 				break
 			}
 			fmt.Println(err.Error())
-			return
+			break
 		}
 
 		// fmt.Println("Args %v", args)
@@ -54,33 +54,49 @@ func handleConn(conn net.Conn) {
 		case "PING":
 			commands.HandlePING(conn)
 		case "ECHO":
-			commands.HandleECHO(conn, args[1])
+			echoValue := args[1]
+			commands.HandleECHO(conn, echoValue)
 		case "RPUSH":
-			commands.HandleRPUSH(conn, args[1], args[2:])
+			list_key := args[1]
+			values := args[2:]
+			commands.HandleRPUSH(conn, list_key, values)
+		case "LRANGE":
+			list_key := args[1]
+			start, nilStart := strconv.ParseInt(args[2], 10, 64)
+			stop, nilStop := strconv.ParseInt(args[3], 10, 64)
+			if nilStart != nil || nilStop != nil {
+				fmt.Printf("start and stop indexes are required")
+				break
+			}
+			commands.HandleLRANGE(conn, list_key, start, stop)
 		case "SET":
+			key := args[1]
+			value := args[2]
 			if len(args) >= 5 {
 				var isDeadlineMillis bool
-
-				if strings.ToUpper(args[3]) == "PX" {
+				flag := args[3]
+				deadline := args[4]
+				if strings.ToUpper(flag) == "PX" {
 					isDeadlineMillis = true
-				} else if strings.ToUpper(args[3]) == "MX" {
+				} else if strings.ToUpper(flag) == "MX" {
 					isDeadlineMillis = false
 				} else {
-					fmt.Printf("Invalid Deadline Parameter %s\n", args[3])
+					fmt.Printf("Invalid Deadline Parameter %s\n", flag)
 					break
 				}
-				expiry, err := strconv.ParseInt(args[4], 10, 64)
+				expiry, err := strconv.ParseInt(deadline, 10, 64)
 				if err != nil {
-					fmt.Printf("Error while parsing deadline: %s\n", args[4])
+					fmt.Printf("Error while parsing deadline: %s\n", deadline)
 					break
 				}
-				commands.HandleSET(conn, args[1], args[2], expiry, isDeadlineMillis)
+				commands.HandleSET(conn, key, value, expiry, isDeadlineMillis)
 			} else {
-				commands.HandleSET(conn, args[1], args[2], -1, false)
+				commands.HandleSET(conn, key, value, -1, false)
 
 			}
 		case "GET":
-			commands.HandleGET(conn, args[1])
+			key := args[1]
+			commands.HandleGET(conn, key)
 
 		}
 
