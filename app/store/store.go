@@ -67,20 +67,39 @@ func (s *Storage[T]) Get(key string) (T, error) {
 	return val.Value, nil
 }
 
-func (s *Storage[T]) RPush(list_key string, value string) int {
+func (s *Storage[T]) Push(list_key string, values []string, isLPUSH bool) int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	var list []string
+	var list []any
 	entry, ok := s.store[list_key]
 	if ok {
 		var temp any = entry.Value
-		list, ok = temp.([]string)
+		list, ok = temp.([]any)
 		if !ok {
 			// Not a list type
 			return -1
 		}
 	}
-	list = append(list, value)
+	/*
+		list.append(vals,existing)
+		existing[]
+		val[]
+	*/
+	if isLPUSH {
+		// new vals --> a b c
+		// old --> 1 2 3
+		// lpush --> c b a
+		// final --> c b a 1 2 3
+		reversed := make([]any, len(values))
+		for i, v := range values {
+			reversed[len(values)-1-i] = v
+		}
+		list = append(reversed, list...)
+	} else {
+		for _, v := range values {
+			list = append(list, v)
+		}
+	}
 	s.store[list_key] = Value[T]{
 		Value:            any(list).(T),
 		Deadline:         -1,
@@ -89,16 +108,17 @@ func (s *Storage[T]) RPush(list_key string, value string) int {
 	return len(list)
 }
 
-func (s *Storage[T]) LRange(list_key string, start int64, stop int64) []string {
+func (s *Storage[T]) LRange(list_key string, start int64, stop int64) []any {
+	// Locks are set in Get()
 	temp, err := Cache.Get(list_key)
 
-	defaultValue := make([]string, 0)
+	defaultValue := make([]any, 0)
 	if err != nil {
 		// KV pair doesnt exist
 		return defaultValue
 	}
-	var vals []string
-	vals, ok := temp.([]string)
+	var vals []any
+	vals, ok := temp.([]any)
 	if !ok {
 		// wrong type
 		return defaultValue

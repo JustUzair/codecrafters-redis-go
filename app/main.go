@@ -60,6 +60,10 @@ func handleConn(conn net.Conn) {
 			list_key := args[1]
 			values := args[2:]
 			commands.HandleRPUSH(conn, list_key, values)
+		case "LPUSH":
+			list_key := args[1]
+			values := args[2:]
+			commands.HandleLPUSH(conn, list_key, values)
 		case "LRANGE":
 			list_key := args[1]
 			start, nilStart := strconv.ParseInt(args[2], 10, 64)

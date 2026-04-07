@@ -7,7 +7,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func HandleRPUSH(conn net.Conn, list_key string, value []string) {
-	var list_size int = store.Cache.Push(list_key, value, false)
+func HandleLPUSH(conn net.Conn, list_key string, vals []string) {
+	var list_size int = store.Cache.Push(list_key, vals, true)
 	conn.Write([]byte(fmt.Sprintf(":%d\r\n", list_size)))
 }

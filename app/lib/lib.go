@@ -75,11 +75,12 @@ $1\r\n
 c\r\n
 */
 
-func MarshalArrayRESP(values []string) string {
+func MarshalArrayRESP(values []any) string {
 	var dataResp []string
 	lenResp := fmt.Sprintf("*%d\r\n", len(values))
 	dataResp = append(dataResp, lenResp)
-	for _, str := range values {
+	for _, v := range values {
+		var str string = v.(string)
 		dataResp = append(dataResp, fmt.Sprintf("$%d\r\n%s\r\n", len(str), str))
 	}
 	return strings.Join(dataResp, "")

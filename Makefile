@@ -40,7 +40,9 @@ lrange-pos:
 lrange-neg:
 	redis-cli RPUSH banana pear grape pineapple apple strawberry orange raspberry
 	redis-cli LRANGE banana -8 -1
-
+lpush:
+	redis-cli LPUSH list_key "a" "b" "c"
+	redis-cli LRANGE list_key 0 -1
 # 5. Combined Stress Test (The "Full Circuit")
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg
 	@echo "✅ All manual tests triggered."
