@@ -76,6 +76,9 @@ func handleConn(conn net.Conn) {
 		case "LLEN":
 			list_key := args[1]
 			commands.HandleLLEN(conn, list_key)
+		case "LPOP":
+			list_key := args[1]
+			commands.HandleLPOP(conn, list_key)
 		case "SET":
 			key := args[1]
 			value := args[2]
