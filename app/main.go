@@ -87,6 +87,15 @@ func handleConn(conn net.Conn) {
 				}
 			}
 			commands.HandleLPOP(conn, list_key, n_pop)
+
+		case "BLPOP":
+			list_key := args[1]
+			timeout, err := strconv.Atoi(args[2])
+			if err != nil {
+				fmt.Printf("Invalid argument for number of elements to pop")
+				break
+			}
+			commands.HandleBLPOP(conn, list_key, timeout)
 		case "SET":
 			key := args[1]
 			value := args[2]

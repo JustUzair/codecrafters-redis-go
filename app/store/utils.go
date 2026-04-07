@@ -94,6 +94,11 @@ func (s *Storage[T]) Push(list_key string, values []string, isLPUSH bool) int {
 		Deadline:         -1,
 		IsDeadlineMillis: false,
 	}
+	if workers, ok := s.notifiers[list_key]; ok && len(workers) > 0 {
+		ringBell := workers[0]
+		s.notifiers[list_key] = workers[1:]
+		ringBell <- struct{}{}
+	}
 	return len(list)
 }
 
@@ -190,5 +195,56 @@ func (s *Storage[T]) LPop(list_key string, n_pop int) ([]any, error) {
 		IsDeadlineMillis: entry.IsDeadlineMillis,
 	}
 	return elements, nil
+
+}
+
+func (s *Storage[T]) BLPop(list_key string, timeout int) ([]any, error) {
+	s.mu.Lock() // acquire lock
+	// ----  Step 1. If KV is present, check if list is non empty, if so pop immediately ----
+	entry, exists := s.store[list_key]
+
+	if exists {
+		list, ok := any(entry.Value).([]any)
+		if ok && len(list) > 0 {
+			// Found data! Pop it using your internal (non-locking) logic
+			element := list[0]
+			newList := list[1:]
+
+			// Update store
+			if len(newList) == 0 {
+				delete(s.store, list_key)
+			} else {
+				s.store[list_key] = Value[T]{Value: any(newList).(T), Deadline: entry.Deadline, IsDeadlineMillis: entry.IsDeadlineMillis}
+			}
+
+			s.mu.Unlock()
+			return []any{list_key, element}, nil
+		}
+	}
+	// ----  Step 1. End ----
+
+	// ---- Step 2. Entry doesn't exist, create a bell, that rings channel for updates in data----
+	bell := make(chan struct{}, 1)
+	s.notifiers[list_key] = append(s.notifiers[list_key], bell)
+	s.mu.Unlock()
+
+	var timeoutChannel <-chan time.Time
+	if timeout != 0 {
+		timeoutChannel = time.After(time.Duration(timeout) * time.Second)
+	} else {
+		// how to wait indefinitely
+	}
+	select {
+	case <-bell: // Bell rung, there were updates in the list_key kv pair, consume bell, and pop
+		fmt.Println("Channel changes occured")
+		elements, err := s.LPop(list_key, 1)
+		if err != nil {
+			return nil, err
+		}
+		return []any{list_key, elements[0]}, nil
+	case <-timeoutChannel: // Timeout has occured
+		return nil, fmt.Errorf("Timeout")
+	}
+	// ---- Step 2. ----
 
 }
