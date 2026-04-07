@@ -198,7 +198,7 @@ func (s *Storage[T]) LPop(list_key string, n_pop int) ([]any, error) {
 
 }
 
-func (s *Storage[T]) BLPop(list_key string, timeout int) ([]any, error) {
+func (s *Storage[T]) BLPop(list_key string, timeout float64) ([]any, error) {
 	s.mu.Lock() // acquire lock
 	// ----  Step 1. If KV is present, check if list is non empty, if so pop immediately ----
 	entry, exists := s.store[list_key]

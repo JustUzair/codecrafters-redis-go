@@ -90,7 +90,7 @@ func handleConn(conn net.Conn) {
 
 		case "BLPOP":
 			list_key := args[1]
-			timeout, err := strconv.Atoi(args[2])
+			timeout, err := strconv.ParseFloat(args[2], 64)
 			if err != nil {
 				fmt.Printf("Invalid argument for number of elements to pop")
 				break
