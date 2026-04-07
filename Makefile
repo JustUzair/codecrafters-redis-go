@@ -43,6 +43,9 @@ lrange-neg:
 lpush:
 	redis-cli LPUSH list_key "a" "b" "c"
 	redis-cli LRANGE list_key 0 -1
+llen:
+	redis-cli RPUSH list_key "a" "b" "c" "d"
+	redis-cli LLEN list_key
 # 5. Combined Stress Test (The "Full Circuit")
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg
 	@echo "✅ All manual tests triggered."

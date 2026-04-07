@@ -73,6 +73,9 @@ func handleConn(conn net.Conn) {
 				break
 			}
 			commands.HandleLRANGE(conn, list_key, start, stop)
+		case "LLEN":
+			list_key := args[1]
+			commands.HandleLLEN(conn, list_key)
 		case "SET":
 			key := args[1]
 			value := args[2]

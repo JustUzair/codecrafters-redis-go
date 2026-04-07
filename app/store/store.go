@@ -160,6 +160,22 @@ func (s *Storage[T]) LRange(list_key string, start int64, stop int64) []any {
 	return vals[start : stop+1]
 }
 
+func (s *Storage[T]) LLen(list_key string) int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	temp, err := Cache.Get(list_key)
+
+	if err != nil {
+		// KV pair doesnt exist
+		return 0
+	}
+
+	var list []any
+	list = temp.([]any)
+	return len(list)
+
+}
+
 var Cache = &Storage[any]{
 	store: make(map[string]Value[any]),
 }
