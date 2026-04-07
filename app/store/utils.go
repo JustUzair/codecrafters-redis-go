@@ -242,7 +242,7 @@ func (s *Storage[T]) BLPop(list_key string, timeout float64) ([]any, error) {
 		workers := s.notifiers[list_key]
 		for i, v := range workers {
 			if v == bell {
-				s.notifiers[list_key] = append(waiters[:i], waiters[i+1:]...)
+				s.notifiers[list_key] = append(workers[:i], workers[i+1:]...)
 				break
 			}
 		}
