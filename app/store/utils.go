@@ -278,7 +278,7 @@ func (s *Storage[T]) Type(key string) string {
 func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, exists := s.store[list_key]
+	entry, exists := s.store[list_key]
 	if !exists {
 		// inner most entry
 		var streamEntry StreamEntry = StreamEntry{
@@ -301,7 +301,16 @@ func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) (int, erro
 		}
 		return 1, nil
 	} else {
-		//append to stream
+		existingStream := any(entry.Value).(Stream)
+		existingStream.StreamEntries = append(existingStream.StreamEntries, StreamEntry{
+			ID:     id,
+			Fields: fields,
+		})
+		s.store[list_key] = Value[T]{
+			Value:            any(existingStream).(T),
+			Deadline:         entry.Deadline,
+			IsDeadlineMillis: entry.IsDeadlineMillis,
+		}
 	}
 
 	return 0, nil
