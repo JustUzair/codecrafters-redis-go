@@ -241,13 +241,6 @@ func (s *Storage[T]) BLPop(list_key string, timeout float64) ([]any, error) {
 		if err != nil {
 			return nil, err
 		}
-		// workers := s.notifiers[list_key]
-		// for i, v := range workers {
-		// 	if v == bell {
-		// 		s.notifiers[list_key] = append(workers[:i], workers[i+1:]...)
-		// 		break
-		// 	}
-		// }
 		s.removeBell(list_key, bell)
 		return []any{list_key, elements[0]}, nil
 	case <-timeoutChannel: // Timeout has occured
