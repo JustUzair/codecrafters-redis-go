@@ -275,7 +275,7 @@ func (s *Storage[T]) Type(key string) string {
 
 }
 
-func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) (int, error) {
+func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	entry, exists := s.store[list_key]
@@ -299,7 +299,7 @@ func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) (int, erro
 			Deadline:         -1,
 			IsDeadlineMillis: false,
 		}
-		return 1, nil
+
 	} else {
 		existingStream := any(entry.Value).(Stream)
 		existingStream.StreamEntries = append(existingStream.StreamEntries, StreamEntry{
@@ -311,7 +311,6 @@ func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) (int, erro
 			Deadline:         entry.Deadline,
 			IsDeadlineMillis: entry.IsDeadlineMillis,
 		}
-	}
 
-	return 0, nil
+	}
 }
