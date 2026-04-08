@@ -59,6 +59,9 @@ blpop:
 type:
 	redis-cli RPUSH list_key "a" "b" "c" "d"	
 	redis-cli TYPE list_key
+xadd:
+	redis-cli XADD stream_key 1526919030474-0 temperature 36 humidity 95
+	redis-cli XADD stream_key 0-1 foo bar
 
-test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg
+test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg lpush llen lpop n_lpop blpop type
 	@echo "✅ All manual tests triggered."

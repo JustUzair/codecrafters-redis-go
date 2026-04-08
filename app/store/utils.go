@@ -267,8 +267,42 @@ func (s *Storage[T]) Type(key string) string {
 		return "string"
 	case []any:
 		return "list"
+	case Stream:
+		return "stream"
 	default:
 		return "none"
 	}
 
+}
+
+func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, exists := s.store[list_key]
+	if !exists {
+		// inner most entry
+		var streamEntry StreamEntry = StreamEntry{
+			ID:     id,
+			Fields: fields,
+		}
+		// create 1 entry space for the above entry
+
+		var streamEntries []StreamEntry = make([]StreamEntry, 1)
+		streamEntries[0] = streamEntry
+
+		var stream Stream = Stream{
+			StreamEntries: streamEntries,
+		}
+		// create stream
+		s.store[list_key] = Value[T]{
+			Value:            any(stream).(T),
+			Deadline:         -1,
+			IsDeadlineMillis: false,
+		}
+		return 1, nil
+	} else {
+
+	}
+
+	return 0, nil
 }

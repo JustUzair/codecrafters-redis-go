@@ -11,6 +11,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
 	"github.com/codecrafters-io/redis-starter-go/app/lib/commands"
+	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
 func main() {
@@ -128,6 +129,28 @@ func handleConn(conn net.Conn) {
 		case "TYPE":
 			key := args[1]
 			commands.HandleTYPE(conn, key)
+		case "XADD":
+			list_key := args[1]
+			stream_id := args[2]
+			if len(args) <= 3 {
+				fmt.Printf("Insufficient params count, args passed %d\n", len(args))
+				return
+			}
+			var rawFields []string = args[3:]
+			if len(rawFields)%2 != 0 {
+				fmt.Println("Every field must consist of a key and a value")
+				return
+			}
+			var fields []store.Field
+			var fieldLen int = len(rawFields)
+
+			for i := 0; i < fieldLen-1; i += 2 {
+				key := rawFields[i]
+				value := rawFields[i+1]
+				fields = append(fields, store.Field{Key: string(key), Value: any(value)})
+			}
+			// fmt.Println("Fields Constructed \n Fields: \n ", fields)
+			commands.HandleXADD(conn, list_key, stream_id, fields)
 
 		}
 
