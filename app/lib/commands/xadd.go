@@ -15,7 +15,7 @@ func HandleXADD(conn net.Conn, list_key string, id string, fields []store.Field)
 	}
 	var response string
 	if n_entries == 1 {
-		response = fmt.Sprintf("+%s\r\n", id)
+		response = fmt.Sprintf("$%d\r\n%s\r\n", len(id), id)
 	} else {
 		response = fmt.Sprintf("+%d\r\n", n_entries)
 	}
