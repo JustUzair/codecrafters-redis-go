@@ -241,19 +241,31 @@ func (s *Storage[T]) BLPop(list_key string, timeout float64) ([]any, error) {
 		if err != nil {
 			return nil, err
 		}
-		workers := s.notifiers[list_key]
-		for i, v := range workers {
-			if v == bell {
-				s.notifiers[list_key] = append(workers[:i], workers[i+1:]...)
-				break
-			}
-		}
+		// workers := s.notifiers[list_key]
+		// for i, v := range workers {
+		// 	if v == bell {
+		// 		s.notifiers[list_key] = append(workers[:i], workers[i+1:]...)
+		// 		break
+		// 	}
+		// }
+		s.removeBell(list_key, bell)
 		return []any{list_key, elements[0]}, nil
 	case <-timeoutChannel: // Timeout has occured
+		s.removeBell(list_key, bell)
 		return nil, fmt.Errorf("Timeout")
 	}
 	// ---- Step 2. ----
 
+}
+
+func (s *Storage[T]) removeBell(list_key string, bell chan struct{}) {
+	workers := s.notifiers[list_key]
+	for i, v := range workers {
+		if v == bell {
+			s.notifiers[list_key] = append(workers[:i], workers[i+1:]...)
+			break
+		}
+	}
 }
 
 func (s *Storage[T]) Type(key string) string {
