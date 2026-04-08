@@ -85,3 +85,7 @@ func MarshalArrayRESP(values []any) string {
 	}
 	return strings.Join(dataResp, "")
 }
+
+func MarshalErrorRESP(errorString string) string {
+	return fmt.Sprintf("-%s\r\n", errorString)
+}

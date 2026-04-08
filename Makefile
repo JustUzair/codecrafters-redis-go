@@ -62,6 +62,10 @@ type:
 xadd:
 	redis-cli XADD stream_key 1526919030474-0 temperature 36 humidity 95
 	redis-cli XADD stream_key 0-1 foo bar
+xadd-entry-ids:
+	redis-cli XADD some_key 1-1 foo bar
+	redis-cli XADD some_key 1-1 bar baz
+	redis-cli XADD some_key 0-2 bar baz
 
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg lpush llen lpop n_lpop blpop type
 	@echo "✅ All manual tests triggered."

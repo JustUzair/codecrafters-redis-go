@@ -2,6 +2,8 @@ package store
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -275,10 +277,10 @@ func (s *Storage[T]) Type(key string) string {
 
 }
 
-func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) {
+func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	entry, exists := s.store[list_key]
+	entry, exists := s.store[stream_key]
 	if !exists {
 		// inner most entry
 		var streamEntry StreamEntry = StreamEntry{
@@ -294,23 +296,50 @@ func (s *Storage[T]) XAdd(list_key string, id string, fields []Field) {
 			StreamEntries: streamEntries,
 		}
 		// create stream
-		s.store[list_key] = Value[T]{
+		s.store[stream_key] = Value[T]{
 			Value:            any(stream).(T),
 			Deadline:         -1,
 			IsDeadlineMillis: false,
 		}
+		return true, nil
 
 	} else {
+
 		existingStream := any(entry.Value).(Stream)
+		streamEntries := existingStream.StreamEntries
+		n_currentEntries := len(streamEntries)
+
+		last_entry_time, last_entry_seq := getIdTimeSequence(streamEntries[n_currentEntries-1].ID)
+		new_entry_time, new_entry_seq := getIdTimeSequence(id)
+
+		if !isValidTimeSequence(last_entry_time, last_entry_seq, new_entry_time, new_entry_seq) {
+			return false, fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
+		}
 		existingStream.StreamEntries = append(existingStream.StreamEntries, StreamEntry{
 			ID:     id,
 			Fields: fields,
 		})
-		s.store[list_key] = Value[T]{
+		s.store[stream_key] = Value[T]{
 			Value:            any(existingStream).(T),
 			Deadline:         entry.Deadline,
 			IsDeadlineMillis: entry.IsDeadlineMillis,
 		}
+		return true, nil
+	}
+}
 
+func getIdTimeSequence(id string) (int, int) {
+	time_seq := strings.Split(id, "-")
+	time, _ := strconv.Atoi(time_seq[0])
+	seq, _ := strconv.Atoi(time_seq[1])
+
+	return time, seq
+}
+
+func isValidTimeSequence(prev_time int, prev_seq int, new_time int, new_seq int) bool {
+	if new_time == prev_time {
+		return new_seq > prev_seq
+	} else {
+		return new_time > prev_time
 	}
 }
