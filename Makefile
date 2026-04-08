@@ -53,6 +53,12 @@ n_lpop:
 	redis-cli RPUSH list_key "a" "b" "c" "d"
 	redis-cli LPOP list_key 2
 	redis-cli LRANGE list_key 0 -1
-# 5. Combined Stress Test (The "Full Circuit")
+blpop:
+	redis-cli RPUSH list_key "a" "b" "c" "d"
+	redis-cli BLPOP list_key 2
+type:
+	redis-cli RPUSH list_key "a" "b" "c" "d"	
+	redis-cli TYPE list_key
+
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg
 	@echo "✅ All manual tests triggered."

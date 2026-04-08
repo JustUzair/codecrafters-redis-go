@@ -125,6 +125,10 @@ func handleConn(conn net.Conn) {
 			key := args[1]
 			commands.HandleGET(conn, key)
 
+		case "TYPE":
+			key := args[1]
+			commands.HandleTYPE(conn, key)
+
 		}
 
 	}

@@ -253,3 +253,22 @@ func (s *Storage[T]) BLPop(list_key string, timeout float64) ([]any, error) {
 	// ---- Step 2. ----
 
 }
+
+func (s *Storage[T]) Type(key string) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	entry, ok := s.store[key]
+	if !ok {
+		return "none"
+	}
+
+	switch any(entry.Value).(type) {
+	case string:
+		return "string"
+	case []any:
+		return "list"
+	default:
+		return "none"
+	}
+
+}
