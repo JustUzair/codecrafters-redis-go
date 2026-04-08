@@ -282,6 +282,10 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, e
 	defer s.mu.Unlock()
 	entry, exists := s.store[stream_key]
 	if !exists {
+		new_time, new_seq := getIdTimeSequence(id)
+		if new_time == 0 && new_seq == 0 {
+			return false, fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
+		}
 		// inner most entry
 		var streamEntry StreamEntry = StreamEntry{
 			ID:     id,
