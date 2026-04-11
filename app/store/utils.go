@@ -308,15 +308,14 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, s
 		if isAutoSequence {
 			id, err = s.createAutoSequence(entry, id)
 			// fmt.Println("Auto Seq created: ", id)
-			if err != nil {
-				return false, "", err
-			}
+
 		} else if isFullAutoId {
 			id, err = s.createAutoId(entry)
 			// fmt.Println("Auto ID created: ", id)
-			if err != nil {
-				return false, "", err
-			}
+
+		}
+		if err != nil {
+			return false, "", err
 		}
 		// inner most entry
 		var streamEntry StreamEntry = StreamEntry{
@@ -343,24 +342,21 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, s
 		existingStream := any(entry.Value).(Stream)
 		if isAutoSequence {
 			id, err = s.createAutoSequence(entry, id)
-			if err != nil {
-				return false, "", err
-			}
 		} else if isFullAutoId {
 			id, err = s.createAutoId(entry)
 			// fmt.Println("Auto ID created: ", id)
-			if err != nil {
-				return false, "", err
-			}
-		} else {
-			streamEntries := existingStream.StreamEntries
-			n_currentEntries := len(streamEntries)
+		}
 
-			last_entry_time, last_entry_seq := lib.GetIdTimeSequence(streamEntries[n_currentEntries-1].ID)
-			new_entry_time, new_entry_seq := lib.GetIdTimeSequence(id)
-			if !lib.IsValidTimeSequence(last_entry_time, last_entry_seq, new_entry_time, new_entry_seq) {
-				return false, "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
-			}
+		if err != nil {
+			return false, "", err
+		}
+		streamEntries := existingStream.StreamEntries
+		n_currentEntries := len(streamEntries)
+
+		last_entry_time, last_entry_seq := lib.GetIdTimeSequence(streamEntries[n_currentEntries-1].ID)
+		new_entry_time, new_entry_seq := lib.GetIdTimeSequence(id)
+		if !lib.IsValidTimeSequence(last_entry_time, last_entry_seq, new_entry_time, new_entry_seq) {
+			return false, "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
 		}
 
 		existingStream.StreamEntries = append(existingStream.StreamEntries, StreamEntry{
