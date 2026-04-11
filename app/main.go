@@ -152,6 +152,11 @@ func handleConn(conn net.Conn) {
 			}
 			// fmt.Println("Fields Constructed \n Fields: \n ", fields)
 			commands.HandleXADD(conn, list_key, stream_id, fields)
+		case "XRANGE":
+			list_key := args[1]
+			start, _ := strconv.ParseInt(args[2], 10, 64)
+			stop, _ := strconv.ParseInt(args[3], 10, 64)
+			commands.HandleXRANGE(conn, list_key, start, stop)
 
 		}
 

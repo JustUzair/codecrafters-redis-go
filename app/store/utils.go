@@ -299,7 +299,7 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, s
 
 	if !isAutoSequence && !isFullAutoId {
 		time, seq := lib.GetIdTimeSequence(id)
-		fmt.Println("Timeseq: ", time, seq)
+		// fmt.Println("Timeseq: ", time, seq)
 		if time == 0 && seq == 0 {
 			return false, "", fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
 		}
@@ -358,69 +358,6 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, s
 	return true, id, nil
 }
 
-func (s *Storage[T]) createAutoSequence(entry Value[T], id string) (string, error) {
-	requested_time, _ := lib.GetIdTimeSequence(id)
-
-	if entry.IsEmpty() {
-		seq := 0
-		if requested_time == 0 {
-			seq = 1
-		}
-		return fmt.Sprintf("%d-%d", requested_time, seq), nil
-	}
-
-	stream := any(entry.Value).(Stream)
-	lastEntry := stream.StreamEntries[len(stream.StreamEntries)-1]
-	last_time, last_seq := lib.GetIdTimeSequence(lastEntry.ID)
-
-	// CAVEAT: The requested time cannot be smaller than the last entry's time
-	if requested_time < last_time {
-		return "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
-	}
-
-	var new_seq int64 = 0
-	if requested_time == last_time {
-		new_seq = last_seq + 1
-	} else {
-		// If requested_time > last_time, we can safely start at 0
-		new_seq = 0
-	}
-
-	return fmt.Sprintf("%d-%d", requested_time, new_seq), nil
-}
-
-func (s *Storage[T]) createAutoId(entry Value[T]) (string, error) {
-	requested_time := time.Now().UnixMilli()
-
-	if entry.IsEmpty() {
-		seq := 0
-		if requested_time == 0 {
-			seq = 1
-		}
-		return fmt.Sprintf("%d-%d", requested_time, seq), nil
-	}
-
-	stream := any(entry.Value).(Stream)
-	lastEntry := stream.StreamEntries[len(stream.StreamEntries)-1]
-	last_time, last_seq := lib.GetIdTimeSequence(lastEntry.ID)
-
-	// CAVEAT: The requested time cannot be smaller than the last entry's time
-	if requested_time < last_time {
-		return "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
-	}
-
-	var new_seq int64 = 0
-
-	if requested_time == last_time {
-		new_seq = last_seq + 1
-	} else {
-		// If requested_time > last_time, we can safely start at 0
-		new_seq = 0
-	}
-
-	return fmt.Sprintf("%d-%d", requested_time, new_seq), nil
-}
-
 func (s *Storage[T]) resolveID(entry Value[T], id string, isAutoSequence bool, isFullAutoId bool) (string, error) {
 	if !isAutoSequence && !isFullAutoId {
 		return id, nil
@@ -463,6 +400,22 @@ func (s *Storage[T]) resolveID(entry Value[T], id string, isAutoSequence bool, i
 	return fmt.Sprintf("%d-%d", requested_time, new_seq), nil
 }
 
+func (s *Storage[T]) XRange(stream_key string, start int64, stop int64) ([]StreamEntry, error) {
+	entry, exists := s.store[stream_key]
+	if !exists {
+		return nil, fmt.Errorf("key not found")
+	}
+	stream := any(entry.Value).(Stream)
+	streamEntries := stream.StreamEntries
+	var res []StreamEntry
+	for _, v := range streamEntries {
+		time, _ := lib.GetIdTimeSequence(v.ID)
+		if time >= start && time <= stop {
+			res = append(res, v)
+		}
+	}
+	return res, nil
+}
 func (v Value[T]) IsEmpty() bool {
 	// If Deadline is 0 and Value is nil, it's a zero-value struct
 	return v.Deadline == 0 && any(v.Value) == nil

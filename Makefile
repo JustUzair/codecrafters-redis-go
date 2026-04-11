@@ -71,5 +71,9 @@ xadd-auto-seq:
 	redis-cli XADD stream_key 1-* bar baz
 xadd-auto-id:
 	redis-cli XADD stream_key "*" foo bar
+xrange:
+	redis-cli XADD some_key 1526985054069-0 temperature 36 humidity 95
+	redis-cli XADD some_key 1526985054079-0 temperature 37 humidity 94
+	redis-cli XRANGE some_key 1526985054069 1526985054079
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg lpush llen lpop n_lpop blpop type xadd
 	@echo "✅ All manual tests triggered."

@@ -76,14 +76,26 @@ c\r\n
 */
 
 func MarshalArrayRESP(values []any) string {
-	var dataResp []string
-	lenResp := fmt.Sprintf("*%d\r\n", len(values))
-	dataResp = append(dataResp, lenResp)
+	res := fmt.Sprintf("*%d\r\n", len(values))
+
 	for _, v := range values {
-		var str string = v.(string)
-		dataResp = append(dataResp, fmt.Sprintf("$%d\r\n%s\r\n", len(str), str))
+		switch val := v.(type) {
+		case string:
+			// Standard Bulk String
+			res += fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)
+		case []any:
+			// Recursive call for nested arrays!
+			res += MarshalArrayRESP(val)
+		case int:
+			// Optional: Handle integers if you ever pass them
+			res += fmt.Sprintf(":%d\r\n", val)
+		default:
+			// Fallback for safety
+			s := fmt.Sprint(val)
+			res += fmt.Sprintf("$%d\r\n%s\r\n", len(s), s)
+		}
 	}
-	return strings.Join(dataResp, "")
+	return res
 }
 
 func MarshalErrorRESP(errorString string) string {
