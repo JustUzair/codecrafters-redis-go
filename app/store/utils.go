@@ -282,157 +282,88 @@ func (s *Storage[T]) Type(key string) string {
 
 }
 
-func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, string, error) {
+func (s *Storage[T]) XAdd(stream_key string, inputID string, fields []Field) (bool, string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	entry, exists := s.store[stream_key]
-	var isFullAutoId bool
-	var isAutoSequence bool
-	var err error
 
-	isFullAutoId = lib.IsFullAutoId(id)
-	if !isFullAutoId {
-		isAutoSequence = lib.IsAutoSequence(id)
+	entry, _ := s.store[stream_key]
+
+	// 1. Resolve the ID
+	finalID, err := s.resolveID(entry, inputID)
+	if err != nil {
+		return false, "", err
 	}
-	// fmt.Println("isFullAutoId: ", isFullAutoId)
-	// fmt.Println("isAutoSequence: ", isAutoSequence)
 
-	if !isAutoSequence && !isFullAutoId {
-		time, seq := lib.GetIdTimeSequence(id)
-		fmt.Println("Timeseq: ", time, seq)
-		if time == 0 && seq == 0 {
-			return false, "", fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
-		}
-	}
-	if !exists {
-		if isAutoSequence {
-			id, err = s.createAutoSequence(entry, id)
-			// fmt.Println("Auto Seq created: ", id)
-
-		} else if isFullAutoId {
-			id, err = s.createAutoId(entry)
-			// fmt.Println("Auto ID created: ", id)
-
-		}
-		if err != nil {
-			return false, "", err
-		}
-		// inner most entry
-		var streamEntry StreamEntry = StreamEntry{
-			ID:     id,
-			Fields: fields,
-		}
-		// create 1 entry space for the above entry
-
-		var streamEntries []StreamEntry = make([]StreamEntry, 1)
-		streamEntries[0] = streamEntry
-
-		var stream Stream = Stream{
-			StreamEntries: streamEntries,
-		}
-		// create stream
-		s.store[stream_key] = Value[T]{
-			Value:            any(stream).(T),
-			Deadline:         -1,
-			IsDeadlineMillis: false,
-		}
-
+	// 2. Prepare/Update the Stream Object
+	var stream Stream
+	if entry.IsEmpty() {
+		stream = Stream{StreamEntries: make([]StreamEntry, 0)}
 	} else {
-
-		existingStream := any(entry.Value).(Stream)
-		if isAutoSequence {
-			id, err = s.createAutoSequence(entry, id)
-		} else if isFullAutoId {
-			id, err = s.createAutoId(entry)
-			// fmt.Println("Auto ID created: ", id)
-		}
-
-		if err != nil {
-			return false, "", err
-		}
-		streamEntries := existingStream.StreamEntries
-		n_currentEntries := len(streamEntries)
-
-		last_entry_time, last_entry_seq := lib.GetIdTimeSequence(streamEntries[n_currentEntries-1].ID)
-		new_entry_time, new_entry_seq := lib.GetIdTimeSequence(id)
-		if !lib.IsValidTimeSequence(last_entry_time, last_entry_seq, new_entry_time, new_entry_seq) {
-			return false, "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
-		}
-
-		existingStream.StreamEntries = append(existingStream.StreamEntries, StreamEntry{
-			ID:     id,
-			Fields: fields,
-		})
-		s.store[stream_key] = Value[T]{
-			Value:            any(existingStream).(T),
-			Deadline:         entry.Deadline,
-			IsDeadlineMillis: entry.IsDeadlineMillis,
-		}
+		stream = any(entry.Value).(Stream)
 	}
-	return true, id, nil
+
+	stream.StreamEntries = append(stream.StreamEntries, StreamEntry{
+		ID:     finalID,
+		Fields: fields,
+	})
+
+	// 3. Unified Write
+	s.store[stream_key] = Value[T]{
+		Value:            any(stream).(T),
+		Deadline:         -1,
+		IsDeadlineMillis: false,
+	}
+
+	return true, finalID, nil
 }
 
-func (s *Storage[T]) createAutoSequence(entry Value[T], id string) (string, error) {
-	requested_time, _ := lib.GetIdTimeSequence(id)
+func (s *Storage[T]) resolveID(entry Value[T], inputID string) (string, error) {
+	var reqTime int64
+	var reqSeq int64
+	isAutoSeq := lib.IsAutoSequence(inputID)
+	isFullAuto := lib.IsFullAutoId(inputID)
 
-	if entry.IsEmpty() {
-		seq := 0
-		if requested_time == 0 {
-			seq = 1
-		}
-		return fmt.Sprintf("%d-%d", requested_time, seq), nil
+	// 1. Determine base millisecond
+	if isFullAuto {
+		reqTime = time.Now().UnixMilli()
+	} else {
+		t, s := lib.GetIdTimeSequence(inputID)
+		reqTime, reqSeq = int64(t), int64(s)
 	}
 
+	// 2. Handle Empty Stream
+	if entry.IsEmpty() {
+		if reqTime == 0 && (isFullAuto || isAutoSeq || reqSeq == 0) {
+			return "0-1", nil // Minimum valid ID is 0-1
+		}
+		if isFullAuto || isAutoSeq {
+			return fmt.Sprintf("%d-0", reqTime), nil
+		}
+		return fmt.Sprintf("%d-%d", reqTime, reqSeq), nil
+	}
+
+	// 3. Compare with Last Entry (Monotonicity)
 	stream := any(entry.Value).(Stream)
 	lastEntry := stream.StreamEntries[len(stream.StreamEntries)-1]
-	last_time, last_seq := lib.GetIdTimeSequence(lastEntry.ID)
+	lTime, lSeq := lib.GetIdTimeSequence(lastEntry.ID)
+	lastTime, lastSeq := int64(lTime), int64(lSeq)
 
-	// CAVEAT: The requested time cannot be smaller than the last entry's time
-	if requested_time < last_time {
+	if reqTime < lastTime {
 		return "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
 	}
 
-	var new_seq int64 = 0
-	if requested_time == last_time {
-		new_seq = last_seq + 1
-	} else {
-		// If requested_time > last_time, we can safely start at 0
-		new_seq = 0
-	}
-
-	return fmt.Sprintf("%d-%d", requested_time, new_seq), nil
-}
-
-func (s *Storage[T]) createAutoId(entry Value[T]) (string, error) {
-	requested_time := time.Now().UnixMilli()
-
-	if entry.IsEmpty() {
-		seq := 0
-		if requested_time == 0 {
-			seq = 1
+	finalSeq := reqSeq
+	if isFullAuto || isAutoSeq {
+		if reqTime == lastTime {
+			finalSeq = lastSeq + 1
+		} else {
+			finalSeq = 0
 		}
-		return fmt.Sprintf("%d-%d", requested_time, seq), nil
-	}
-
-	stream := any(entry.Value).(Stream)
-	lastEntry := stream.StreamEntries[len(stream.StreamEntries)-1]
-	last_time, last_seq := lib.GetIdTimeSequence(lastEntry.ID)
-
-	// CAVEAT: The requested time cannot be smaller than the last entry's time
-	if requested_time < last_time {
+	} else if reqTime == lastTime && reqSeq <= lastSeq {
 		return "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
 	}
 
-	var new_seq int64 = 0
-
-	if requested_time == last_time {
-		new_seq = last_seq + 1
-	} else {
-		// If requested_time > last_time, we can safely start at 0
-		new_seq = 0
-	}
-
-	return fmt.Sprintf("%d-%d", requested_time, new_seq), nil
+	return fmt.Sprintf("%d-%d", reqTime, finalSeq), nil
 }
 
 func (v Value[T]) IsEmpty() bool {
