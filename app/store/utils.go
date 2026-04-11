@@ -286,12 +286,20 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, s
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	entry, exists := s.store[stream_key]
-	isAutoSequence := lib.IsAutoSequence(id)
+	var isFullAutoId bool
+	var isAutoSequence bool
 	var err error
-	// isAutoId := lib.isAutoSequence(id)
-	if !isAutoSequence {
-		time, seq := lib.GetIdTimeSequence(id)
 
+	isFullAutoId = lib.IsFullAutoId(id)
+	if !isFullAutoId {
+		isAutoSequence = lib.IsAutoSequence(id)
+	}
+	// fmt.Println("isFullAutoId: ", isFullAutoId)
+	// fmt.Println("isAutoSequence: ", isAutoSequence)
+
+	if !isAutoSequence && !isFullAutoId {
+		time, seq := lib.GetIdTimeSequence(id)
+		fmt.Println("Timeseq: ", time, seq)
 		if time == 0 && seq == 0 {
 			return false, "", fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
 		}
@@ -299,6 +307,13 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, s
 	if !exists {
 		if isAutoSequence {
 			id, err = s.createAutoSequence(entry, id)
+			// fmt.Println("Auto Seq created: ", id)
+			if err != nil {
+				return false, "", err
+			}
+		} else if isFullAutoId {
+			id, err = s.createAutoId(entry)
+			// fmt.Println("Auto ID created: ", id)
 			if err != nil {
 				return false, "", err
 			}
@@ -328,6 +343,12 @@ func (s *Storage[T]) XAdd(stream_key string, id string, fields []Field) (bool, s
 		existingStream := any(entry.Value).(Stream)
 		if isAutoSequence {
 			id, err = s.createAutoSequence(entry, id)
+			if err != nil {
+				return false, "", err
+			}
+		} else if isFullAutoId {
+			id, err = s.createAutoId(entry)
+			// fmt.Println("Auto ID created: ", id)
 			if err != nil {
 				return false, "", err
 			}
@@ -375,7 +396,39 @@ func (s *Storage[T]) createAutoSequence(entry Value[T], id string) (string, erro
 		return "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
 	}
 
-	new_seq := 0
+	var new_seq int64 = 0
+	if requested_time == last_time {
+		new_seq = last_seq + 1
+	} else {
+		// If requested_time > last_time, we can safely start at 0
+		new_seq = 0
+	}
+
+	return fmt.Sprintf("%d-%d", requested_time, new_seq), nil
+}
+
+func (s *Storage[T]) createAutoId(entry Value[T]) (string, error) {
+	requested_time := time.Now().UnixMilli()
+
+	if entry.IsEmpty() {
+		seq := 0
+		if requested_time == 0 {
+			seq = 1
+		}
+		return fmt.Sprintf("%d-%d", requested_time, seq), nil
+	}
+
+	stream := any(entry.Value).(Stream)
+	lastEntry := stream.StreamEntries[len(stream.StreamEntries)-1]
+	last_time, last_seq := lib.GetIdTimeSequence(lastEntry.ID)
+
+	// CAVEAT: The requested time cannot be smaller than the last entry's time
+	if requested_time < last_time {
+		return "", fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
+	}
+
+	var new_seq int64 = 0
+
 	if requested_time == last_time {
 		new_seq = last_seq + 1
 	} else {

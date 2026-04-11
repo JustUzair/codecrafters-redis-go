@@ -69,6 +69,7 @@ xadd-auto-seq:
 	redis-cli XADD stream_key "0-*" foo bar
 	redis-cli XADD stream_key 1-* foo bar
 	redis-cli XADD stream_key 1-* bar baz
-
+xadd-auto-id:
+	redis-cli XADD stream_key "*" foo bar
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg lpush llen lpop n_lpop blpop type xadd
 	@echo "✅ All manual tests triggered."

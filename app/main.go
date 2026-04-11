@@ -138,6 +138,7 @@ func handleConn(conn net.Conn) {
 			}
 			var rawFields []string = args[3:]
 			if len(rawFields)%2 != 0 {
+				fmt.Println("raw fields len", len(rawFields))
 				fmt.Println("Every field must consist of a key and a value")
 				return
 			}
