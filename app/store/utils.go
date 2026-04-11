@@ -422,6 +422,9 @@ func (s *Storage[T]) createAutoId(entry Value[T]) (string, error) {
 }
 
 func (s *Storage[T]) resolveID(entry Value[T], id string, isAutoSequence bool, isFullAutoId bool) (string, error) {
+	if !isAutoSequence && !isFullAutoId {
+		return id, nil
+	}
 	var requested_time int64
 	if isAutoSequence {
 		requested_time, _ = lib.GetIdTimeSequence(id)
