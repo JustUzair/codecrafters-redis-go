@@ -8,7 +8,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func HandleXRANGE(conn net.Conn, list_key string, start int64, stop int64) {
+func HandleXRANGE(conn net.Conn, list_key string, start string, stop string) {
 	res, err := store.Cache.XRange(list_key, start, stop)
 	if err != nil {
 		conn.Write([]byte("*0\r\n")) // Return empty array if not found

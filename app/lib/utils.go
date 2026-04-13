@@ -32,3 +32,42 @@ func IsAutoSequence(id string) bool {
 func IsFullAutoId(id string) bool {
 	return id == "*"
 }
+
+func IsIDInRange(current, start, stop string) bool {
+	// Handle special Redis Range symbols
+	if start == "-" {
+		start = "0-0"
+	}
+	if stop == "+" {
+		stop = "9999999999999-99999"
+	} // Or some max value
+
+	// If start is just "0", it should be treated as "0-0" for comparison
+	if !strings.Contains(start, "-") {
+		start += "-0"
+	}
+	if !strings.Contains(stop, "-") {
+		stop += "-999999999"
+	} // Cover all sequences in that ms
+
+	return CompareIDs(current, start) >= 0 && CompareIDs(current, stop) <= 0
+}
+
+func CompareIDs(id1, id2 string) int {
+	t1, s1 := GetIdTimeSequence(id1)
+	t2, s2 := GetIdTimeSequence(id2)
+
+	if t1 != t2 {
+		if t1 > t2 {
+			return 1
+		}
+		return -1
+	}
+	if s1 != s2 {
+		if s1 > s2 {
+			return 1
+		}
+		return -1
+	}
+	return 0
+}

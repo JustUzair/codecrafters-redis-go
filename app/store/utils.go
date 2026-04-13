@@ -400,7 +400,7 @@ func (s *Storage[T]) resolveID(entry Value[T], id string, isAutoSequence bool, i
 	return fmt.Sprintf("%d-%d", requested_time, new_seq), nil
 }
 
-func (s *Storage[T]) XRange(stream_key string, start int64, stop int64) ([]StreamEntry, error) {
+func (s *Storage[T]) XRange(stream_key string, start string, stop string) ([]StreamEntry, error) {
 	entry, exists := s.store[stream_key]
 	if !exists {
 		return nil, fmt.Errorf("key not found")
@@ -409,8 +409,7 @@ func (s *Storage[T]) XRange(stream_key string, start int64, stop int64) ([]Strea
 	streamEntries := stream.StreamEntries
 	var res []StreamEntry
 	for _, v := range streamEntries {
-		time, _ := lib.GetIdTimeSequence(v.ID)
-		if time >= start && time <= stop {
+		if lib.IsIDInRange(v.ID, start, stop) {
 			res = append(res, v)
 		}
 	}
