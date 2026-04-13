@@ -1,0 +1,9 @@
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: 0xjustuzair/redis-go
+    ports:
+      - "6379:6379"
+    restart: unless-stopped

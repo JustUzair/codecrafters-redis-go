@@ -1,0 +1,45 @@
+# 0xjustuzair/redis-go
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-go
+spec:
+  replicas: 4
+  serviceName: "redis-go"
+  selector:
+    matchLabels:
+      app: redis-go
+  template:
+    metadata:
+      labels:
+        app: redis-go
+    spec:
+      containers:
+        - name: redis-go
+          image: 0xjustuzair/redis-go:latest
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: "128Mi" # Go is lean; 128MB is plenty for basic state
+              cpu: "100m" # 0.1 cores is enough for the "wait and serve" loop
+            limits:
+              memory: "256Mi" # Ceiling for memory spikes during big XRANGE/XADDs
+              cpu: "250m" # Allows a 2.5x burst for processing/serialization
+          readinessProbe: # k8s checks this before sending traffic
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: www # This MUST match the name in volumeClaimTemplates
+              mountPath: /app/data # This is where the folder appears in your Go app
+  volumeClaimTemplates:
+    - metadata:
+        name: www
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi
