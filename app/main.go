@@ -159,6 +159,17 @@ func handleConn(conn net.Conn) {
 
 			commands.HandleXRANGE(conn, list_key, start, stop)
 
+		case "CONFIG":
+			subCommand := args[1]
+			option := args[2]
+			if subCommand == "GET" {
+				// CONFIG GET
+				if option == "dir" || option == "appendonly" || option == "appenddirname" || option == "appendfilename" || option == "appendfsync" {
+					commands.HandleCONFIG_GET(conn, option)
+				} else {
+					fmt.Printf("Invalid option: %s\n", option)
+				}
+			}
 		}
 
 	}

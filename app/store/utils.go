@@ -419,3 +419,29 @@ func (v Value[T]) IsEmpty() bool {
 	// If Deadline is 0 and Value is nil, it's a zero-value struct
 	return v.Deadline == 0 && any(v.Value) == nil
 }
+
+func (s *Storage[T]) ConfigGet(option string) ([]string, error) {
+	var res []string
+	switch option {
+	case "dir":
+		res = append(res, "dir", s.config.Dir)
+	case "appendonly":
+		var appendonlyValue string
+		if s.config.Appendonly {
+			appendonlyValue = "yes"
+		} else {
+			appendonlyValue = "no"
+		}
+		res = append(res, "appendonly", appendonlyValue)
+	case "appenddirname":
+		res = append(res, "appenddirname", s.config.Appenddirname)
+	case "appendfilename":
+		res = append(res, "appendfilename", s.config.Appendfilename)
+	case "appendfsync":
+		res = append(res, "appendfsync", s.config.Appendfsync)
+	default:
+		return nil, fmt.Errorf("Invalid option")
+	}
+
+	return res, nil
+}

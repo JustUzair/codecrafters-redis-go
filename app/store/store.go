@@ -1,6 +1,7 @@
 package store
 
 import (
+	"os"
 	"sync"
 )
 
@@ -24,9 +25,20 @@ type Stream struct {
 	StreamEntries []StreamEntry
 }
 
+//---------------------Config--------------------------//
+
+type Config struct {
+	Dir            string
+	Appenddirname  string
+	Appendonly     bool
+	Appendfilename string
+	Appendfsync    string
+}
+
 //---------------------------------------------------------//
 
 // Generic Base Data Store
+
 type Value[T any] struct {
 	Value            T
 	Deadline         int64
@@ -36,9 +48,30 @@ type Storage[T any] struct {
 	mu        sync.RWMutex
 	store     map[string]Value[T]
 	notifiers map[string][]chan struct{}
+	config    Config
 }
+
+// Init Redis store
 
 var Cache = &Storage[any]{
 	store:     make(map[string]Value[any]),
 	notifiers: make(map[string][]chan struct{}),
+	config: Config{
+		Dir:            getPwd(),
+		Appenddirname:  "appendonlydir",
+		Appendfilename: "appendonly.aof",
+		Appendfsync:    "everysec",
+		Appendonly:     false,
+	},
+}
+
+func getPwd() string {
+	// 1. Check if the environment variable is set
+	if path := os.Getenv("REDIS_DATA_DIR"); path != "" {
+		return path
+	}
+
+	// 2. Fallback to current working directory for local development
+	pwd, _ := os.Getwd()
+	return pwd
 }

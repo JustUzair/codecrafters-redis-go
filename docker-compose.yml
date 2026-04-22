@@ -1,5 +1,7 @@
 services:
   app:
+    environment:
+      - REDIS_DATA_DIR=
     build:
       context: ./
       dockerfile: Dockerfile

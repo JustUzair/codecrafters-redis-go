@@ -40,7 +40,7 @@ func IsIDInRange(current, start, stop string) bool {
 	}
 	if stop == "+" {
 		stop = "9999999999999-99999"
-	} // Or some max value
+	} // maximum upper bound
 
 	// If start is just "0", it should be treated as "0-0" for comparison
 	if !strings.Contains(start, "-") {

@@ -1,6 +1,9 @@
 # 0xjustuzair/redis-go
 apiVersion: apps/v1
 kind: StatefulSet
+env:
+  - name: REDIS_DATA_DIR
+    value: "/app/data"
 metadata:
   name: redis-go
 spec:
