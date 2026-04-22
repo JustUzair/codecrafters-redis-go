@@ -34,14 +34,16 @@ func main() {
 
 	flag.Parse()
 
+	config := store.Config{
+		Dir:            *dir,
+		Appendonly:     *appendOnly == "yes",
+		Appenddirname:  *appendDir,
+		Appendfilename: *appendFile,
+		Appendfsync:    *appendFsync,
+	}
+	// fmt.Println("%v", config)
 	store.Cache.ConfigSet(
-		store.Config{
-			Dir:            *dir,
-			Appendonly:     *appendOnly == "yes",
-			Appenddirname:  *appendDir,
-			Appendfilename: *appendFile,
-			Appendfsync:    *appendFsync,
-		},
+		config,
 	)
 
 	// ------- End of AOF Config Flags -------

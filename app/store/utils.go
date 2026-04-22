@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
@@ -453,14 +454,28 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Config = config
+	fmt.Println("Inside store utils")
+	// If appendonly is enabled, we need to create the appendonlydir and the first aof file if they don't exist
 	if s.Config.Appendonly && len(s.Config.Appenddirname) > 0 {
-		err := os.MkdirAll(fmt.Sprintf("%s/%s", s.Config.Dir, s.Config.Appenddirname), os.ModeAppend)
+		dirPath := filepath.Join(s.Config.Dir, s.Config.Appenddirname)
+		err := os.MkdirAll(dirPath, 0755)
 		if err != nil {
 			return false, err
 		}
-		files, _ := os.ReadDir(fmt.Sprintf("%s/%s", s.Config.Dir, s.Config.Appenddirname))
-		file_seq := len(files) + 1
-		os.OpenFile(fmt.Sprintf("%s/%s/%s.%d.incr.aof", s.Config.Dir, s.Config.Appenddirname, s.Config.Appendfilename, file_seq), os.O_CREATE, os.ModeAppend)
+
+		files, err := os.ReadDir(dirPath)
+		if err != nil {
+			return false, err
+		}
+		fileSeq := len(files) + 1
+		fileName := fmt.Sprintf("%s.%d.incr.aof", s.Config.Appendfilename, fileSeq)
+		filePath := filepath.Join(dirPath, fileName)
+		fmt.Println(filePath)
+		file, err := os.OpenFile(filePath, os.O_CREATE, os.ModeAppend)
+		if err != nil {
+			return false, fmt.Errorf("file creation error: %w", err)
+		}
+		file.Close()
 
 	}
 	return true, nil

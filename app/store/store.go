@@ -2,6 +2,7 @@ package store
 
 import (
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -66,12 +67,14 @@ var Cache = &Storage[any]{
 }
 
 func GetPwd() string {
-	// 1. Check if the environment variable is set
-	if path := os.Getenv("REDIS_DATA_DIR"); path != "" {
-		return path
+	// 1. If K8s/Docker tells us where to go, use that (Absolute Path)
+	if env := os.Getenv("REDIS_DATA_DIR"); env != "" {
+		return env
 	}
 
-	// 2. Fallback to current working directory for local development
+	// 2. Otherwise, use a LOCAL data folder inside your project
 	pwd, _ := os.Getwd()
-	return pwd
+	localData := filepath.Join(pwd, "data")
+	os.MkdirAll(localData, 0755)
+	return localData
 }
