@@ -454,7 +454,14 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 	defer s.mu.Unlock()
 	s.Config = config
 	if s.Config.Appendonly && len(s.Config.Appenddirname) > 0 {
-		os.MkdirAll(fmt.Sprintf("%s/%s", s.Config.Dir, s.Config.Appenddirname), os.ModeAppend)
+		err := os.MkdirAll(fmt.Sprintf("%s/%s", s.Config.Dir, s.Config.Appenddirname), os.ModeAppend)
+		if err != nil {
+			return false, err
+		}
+		files, _ := os.ReadDir(fmt.Sprintf("%s/%s", s.Config.Dir, s.Config.Appenddirname))
+		file_seq := len(files) + 1
+		os.OpenFile(fmt.Sprintf("%s/%s/%s.%d.incr.aof", s.Config.Dir, s.Config.Appenddirname, s.Config.Appendfilename, file_seq), os.O_CREATE, os.ModeAppend)
+
 	}
 	return true, nil
 }
