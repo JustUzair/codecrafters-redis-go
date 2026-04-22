@@ -71,8 +71,6 @@ func GetPwd() string {
 	if env := os.Getenv("REDIS_DATA_DIR"); env != "" {
 		return env
 	}
-
-	// 2. Otherwise, use a LOCAL data folder inside your project
 	pwd, _ := os.Getwd()
 	localData := filepath.Join(pwd, "data")
 	os.MkdirAll(localData, 0755)

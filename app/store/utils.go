@@ -480,7 +480,11 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("manifest file creation error: %w", err)
 		}
-
+		manifestContent := fmt.Sprintf("file %s seq 1 type i", fileName)
+		_, err = manifestFile.WriteString(manifestContent)
+		if err != nil {
+			return false, fmt.Errorf("manifest file write error: %w", err)
+		}
 		file.Close()
 		manifestFile.Close()
 
