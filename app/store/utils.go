@@ -454,7 +454,7 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 	defer s.mu.Unlock()
 	s.Config = config
 	if s.Config.Appendonly && len(s.Config.Appenddirname) > 0 {
-		os.MkdirAll(s.Config.Appenddirname, os.ModeAppend)
+		os.MkdirAll(fmt.Sprintf("%s/%s", s.Config.Dir, s.Config.Appenddirname), os.ModeAppend)
 	}
 	return true, nil
 }
