@@ -469,13 +469,20 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 		}
 		fileSeq := len(files) + 1
 		fileName := fmt.Sprintf("%s.%d.incr.aof", s.Config.Appendfilename, fileSeq)
+		manifestPath := filepath.Join(dirPath, fmt.Sprintf("%s.manifest", s.Config.Appendfilename))
 		filePath := filepath.Join(dirPath, fileName)
 		fmt.Println(filePath)
 		file, err := os.OpenFile(filePath, os.O_CREATE, os.ModeAppend)
 		if err != nil {
 			return false, fmt.Errorf("file creation error: %w", err)
 		}
+		manifestFile, err := os.OpenFile(manifestPath, os.O_CREATE, os.ModeAppend)
+		if err != nil {
+			return false, fmt.Errorf("manifest file creation error: %w", err)
+		}
+
 		file.Close()
+		manifestFile.Close()
 
 	}
 	return true, nil
