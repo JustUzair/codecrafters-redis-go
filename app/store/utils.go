@@ -454,9 +454,11 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Config = config
-	fmt.Println("Inside store utils")
 	// If appendonly is enabled, we need to create the appendonlydir and the first aof file if they don't exist
-	if s.Config.Appendonly && len(s.Config.Appenddirname) > 0 {
+	fmt.Println("s.Config.Appendonly", s.Config.Appendonly)
+	fmt.Println("s.Config.Appenddirname", s.Config.Appenddirname)
+
+	if s.Config.Appendonly {
 		dirPath := filepath.Join(s.Config.Dir, s.Config.Appenddirname)
 		err := os.MkdirAll(dirPath, 0755)
 		if err != nil {
@@ -471,20 +473,24 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 		fileName := fmt.Sprintf("%s.%d.incr.aof", s.Config.Appendfilename, fileSeq)
 		manifestPath := filepath.Join(dirPath, fmt.Sprintf("%s.manifest", s.Config.Appendfilename))
 		filePath := filepath.Join(dirPath, fileName)
+		fmt.Println("here")
+
 		fmt.Println(filePath)
-		file, err := os.OpenFile(filePath, os.O_CREATE, os.ModeAppend)
+		file, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 		if err != nil {
 			return false, fmt.Errorf("file creation error: %w", err)
 		}
-		manifestFile, err := os.OpenFile(manifestPath, os.O_CREATE, os.ModeAppend)
+		manifestFile, err := os.OpenFile(manifestPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 		if err != nil {
 			return false, fmt.Errorf("manifest file creation error: %w", err)
 		}
 		manifestContent := fmt.Sprintf("file %s seq 1 type i", fileName)
-		_, err = manifestFile.WriteString(manifestContent)
+		n, err := manifestFile.WriteString(manifestContent)
 		if err != nil {
 			return false, fmt.Errorf("manifest file write error: %w", err)
 		}
+		fmt.Println("Inside store utils %d", n)
+
 		file.Close()
 		manifestFile.Close()
 
