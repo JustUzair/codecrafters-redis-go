@@ -7,7 +7,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -27,22 +26,16 @@ func main() {
 		appendonlyValue = "no"
 	}
 
-	defaultDir := store.GetPwd()
-	dir := flag.String("dir", defaultDir, "Directory for data storage")
+	dir := flag.String("dir", string(store.Cache.Config.Dir), "Directory for data storage")
 	appendOnly := flag.String("appendonly", appendonlyValue, "Enable/disable appendonly mode")
 	appendDir := flag.String("appenddirname", store.Cache.Config.Appenddirname, "Directory name for AOF")
 	appendFile := flag.String("appendfilename", store.Cache.Config.Appendfilename, "Filename for AOF")
 	appendFsync := flag.String("appendfsync", store.Cache.Config.Appendfsync, "Fsync policy")
 
 	flag.Parse()
-	finalDir := *dir
-	if os.Getenv("REDIS_DATA_DIR") == "" {
-		// If they passed /tmp/redis-data, this makes it ./data/redis-data
-		finalDir = filepath.Join(defaultDir, filepath.Base(*dir))
-	}
 
 	config := store.Config{
-		Dir:            finalDir,
+		Dir:            *dir,
 		Appendonly:     *appendOnly == "yes",
 		Appenddirname:  *appendDir,
 		Appendfilename: *appendFile,
