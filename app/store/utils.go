@@ -421,27 +421,36 @@ func (v Value[T]) IsEmpty() bool {
 }
 
 func (s *Storage[T]) ConfigGet(option string) ([]string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	var res []string
 	switch option {
 	case "dir":
-		res = append(res, "dir", s.config.Dir)
+		res = append(res, "dir", s.Config.Dir)
 	case "appendonly":
 		var appendonlyValue string
-		if s.config.Appendonly {
+		if s.Config.Appendonly {
 			appendonlyValue = "yes"
 		} else {
 			appendonlyValue = "no"
 		}
 		res = append(res, "appendonly", appendonlyValue)
 	case "appenddirname":
-		res = append(res, "appenddirname", s.config.Appenddirname)
+		res = append(res, "appenddirname", s.Config.Appenddirname)
 	case "appendfilename":
-		res = append(res, "appendfilename", s.config.Appendfilename)
+		res = append(res, "appendfilename", s.Config.Appendfilename)
 	case "appendfsync":
-		res = append(res, "appendfsync", s.config.Appendfsync)
+		res = append(res, "appendfsync", s.Config.Appendfsync)
 	default:
 		return nil, fmt.Errorf("Invalid option")
 	}
 
 	return res, nil
+}
+
+func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Config = config
+	return true, nil
 }

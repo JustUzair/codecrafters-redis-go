@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -15,7 +16,35 @@ import (
 )
 
 func main() {
+	//  ------- AOF Config Flags -------
 
+	var appendonlyValue string
+
+	if store.Cache.Config.Appendonly {
+		appendonlyValue = "yes"
+	} else {
+		appendonlyValue = "no"
+	}
+
+	dir := flag.String("dir", string(store.Cache.Config.Dir), "Directory for data storage")
+	appendOnly := flag.String("appendonly", appendonlyValue, "Enable/disable appendonly mode")
+	appendDir := flag.String("appenddirname", store.Cache.Config.Appenddirname, "Directory name for AOF")
+	appendFile := flag.String("appendfilename", store.Cache.Config.Appendfilename, "Filename for AOF")
+	appendFsync := flag.String("appendfsync", store.Cache.Config.Appendfsync, "Fsync policy")
+
+	flag.Parse()
+
+	store.Cache.ConfigSet(
+		store.Config{
+			Dir:            *dir,
+			Appendonly:     *appendOnly == "yes",
+			Appenddirname:  *appendDir,
+			Appendfilename: *appendFile,
+			Appendfsync:    *appendFsync,
+		},
+	)
+
+	// ------- End of AOF Config Flags -------
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")

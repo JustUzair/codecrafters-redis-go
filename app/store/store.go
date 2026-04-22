@@ -48,7 +48,7 @@ type Storage[T any] struct {
 	mu        sync.RWMutex
 	store     map[string]Value[T]
 	notifiers map[string][]chan struct{}
-	config    Config
+	Config    Config
 }
 
 // Init Redis store
@@ -56,8 +56,8 @@ type Storage[T any] struct {
 var Cache = &Storage[any]{
 	store:     make(map[string]Value[any]),
 	notifiers: make(map[string][]chan struct{}),
-	config: Config{
-		Dir:            getPwd(),
+	Config: Config{
+		Dir:            GetPwd(),
 		Appenddirname:  "appendonlydir",
 		Appendfilename: "appendonly.aof",
 		Appendfsync:    "everysec",
@@ -65,7 +65,7 @@ var Cache = &Storage[any]{
 	},
 }
 
-func getPwd() string {
+func GetPwd() string {
 	// 1. Check if the environment variable is set
 	if path := os.Getenv("REDIS_DATA_DIR"); path != "" {
 		return path
