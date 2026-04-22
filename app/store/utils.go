@@ -473,9 +473,9 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 		fileName := fmt.Sprintf("%s.%d.incr.aof", s.Config.Appendfilename, fileSeq)
 		manifestPath := filepath.Join(dirPath, fmt.Sprintf("%s.manifest", s.Config.Appendfilename))
 		filePath := filepath.Join(dirPath, fileName)
-		fmt.Println("here")
+		// fmt.Println("here")
 
-		fmt.Println(filePath)
+		// fmt.Println(filePath)
 		file, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 		if err != nil {
 			return false, fmt.Errorf("file creation error: %w", err)
@@ -485,11 +485,11 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 			return false, fmt.Errorf("manifest file creation error: %w", err)
 		}
 		manifestContent := fmt.Sprintf("file %s seq 1 type i", fileName)
-		n, err := manifestFile.WriteString(manifestContent)
+		_, err = manifestFile.WriteString(manifestContent)
 		if err != nil {
 			return false, fmt.Errorf("manifest file write error: %w", err)
 		}
-		fmt.Println("Inside store utils %d", n)
+		// fmt.Println("Inside store utils %d", n)
 
 		file.Close()
 		manifestFile.Close()

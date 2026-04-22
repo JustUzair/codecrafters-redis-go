@@ -68,11 +68,12 @@ var Cache = &Storage[any]{
 
 func GetPwd() string {
 	// 1. If K8s/Docker tells us where to go, use that (Absolute Path)
-	if env := os.Getenv("REDIS_DATA_DIR"); env != "" {
-		return env
-	}
+	// if env := os.Getenv("REDIS_DATA_DIR"); env != "" {
+	// 	return env
+	// }
 	pwd, _ := os.Getwd()
-	localData := filepath.Join(pwd, "data")
+	// localData := filepath.Join(pwd, "data")
+	localData := filepath.Join(pwd)
 	os.MkdirAll(localData, 0755)
 	return localData
 }
