@@ -101,10 +101,12 @@ func handleConn(conn net.Conn) {
 		case "RPUSH":
 			list_key := args[1]
 			values := args[2:]
+			rawCommand = append(rawCommand, list_key, values)
 			commands.HandleRPUSH(conn, list_key, values)
 		case "LPUSH":
 			list_key := args[1]
 			values := args[2:]
+			rawCommand = append(rawCommand, list_key, values)
 			commands.HandleLPUSH(conn, list_key, values)
 		case "LRANGE":
 			list_key := args[1]
@@ -183,11 +185,13 @@ func handleConn(conn net.Conn) {
 				return
 			}
 			var rawFields []string = args[3:]
+
 			if len(rawFields)%2 != 0 {
 				fmt.Println("raw fields len", len(rawFields))
 				fmt.Println("Every field must consist of a key and a value")
 				return
 			}
+			rawCommand = append(rawCommand, list_key, stream_id, rawFields)
 			var fields []store.Field
 			var fieldLen int = len(rawFields)
 
@@ -197,6 +201,7 @@ func handleConn(conn net.Conn) {
 				fields = append(fields, store.Field{Key: string(key), Value: any(value)})
 			}
 			// fmt.Println("Fields Constructed \n Fields: \n ", fields)
+			store.Cache.WriteToAOF(rawCommand)
 			commands.HandleXADD(conn, list_key, stream_id, fields)
 		case "XRANGE":
 			list_key := args[1]
