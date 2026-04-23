@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
@@ -496,4 +497,52 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 
 	}
 	return true, nil
+}
+
+func (s *Storage[T]) GetActiveAOFPath() (string, error) {
+	// dir + dir_name + file_name.manifest
+	manifestPath := filepath.Join(s.Config.Dir, s.Config.Appenddirname, s.Config.Appendfilename+".manifest")
+
+	content, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return "", err
+	}
+
+	// manifest line: "file <random_name>.1.incr.aof seq 1 type i"
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "type i") {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				return filepath.Join(s.Config.Dir, s.Config.Appenddirname, parts[1]), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("active incremental file not found in manifest")
+}
+
+func (s *Storage[T]) WriteToAOF(commandArgs []any) (bool, error) {
+	// return early
+	if !s.Config.Appendonly {
+		return true, nil
+	}
+	command := lib.MarshalArrayRESP(commandArgs)
+	path, err := s.GetActiveAOFPath()
+	if err != nil {
+		return false, err
+	}
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return false, err
+	}
+	defer file.Close()
+	_, err = file.WriteString(command)
+	if err != nil {
+		return false, err
+	}
+	if s.Config.Appendfsync == "always" {
+		file.Sync() // Force the OS to flush to physical disk
+		return true, nil
+	}
+	return false, nil
 }

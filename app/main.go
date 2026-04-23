@@ -15,6 +15,13 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
+var dir *string
+var appendOnly *string
+var appendDir *string
+var appendFile *string
+var appendFsync *string
+var rawCommand []any
+
 func main() {
 	//  ------- AOF Config Flags -------
 
@@ -26,11 +33,11 @@ func main() {
 		appendonlyValue = "no"
 	}
 
-	dir := flag.String("dir", string(store.Cache.Config.Dir), "Directory for data storage")
-	appendOnly := flag.String("appendonly", appendonlyValue, "Enable/disable appendonly mode")
-	appendDir := flag.String("appenddirname", store.Cache.Config.Appenddirname, "Directory name for AOF")
-	appendFile := flag.String("appendfilename", store.Cache.Config.Appendfilename, "Filename for AOF")
-	appendFsync := flag.String("appendfsync", store.Cache.Config.Appendfsync, "Fsync policy")
+	dir = flag.String("dir", string(store.Cache.Config.Dir), "Directory for data storage")
+	appendOnly = flag.String("appendonly", appendonlyValue, "Enable/disable appendonly mode")
+	appendDir = flag.String("appenddirname", store.Cache.Config.Appenddirname, "Directory name for AOF")
+	appendFile = flag.String("appendfilename", store.Cache.Config.Appendfilename, "Filename for AOF")
+	appendFsync = flag.String("appendfsync", store.Cache.Config.Appendfsync, "Fsync policy")
 
 	flag.Parse()
 
@@ -82,6 +89,9 @@ func handleConn(conn net.Conn) {
 		// fmt.Println("Args %v", args)
 		// fmt.Println("Err %v", err)
 		command := args[0]
+		rawCommand = make([]any, 0)
+		rawCommand = append(rawCommand, command)
+
 		switch command {
 		case "PING":
 			commands.HandlePING(conn)
@@ -131,10 +141,13 @@ func handleConn(conn net.Conn) {
 		case "SET":
 			key := args[1]
 			value := args[2]
+			rawCommand = append(rawCommand, args[1], args[2])
 			if len(args) >= 5 {
 				var isDeadlineMillis bool
 				flag := args[3]
 				deadline := args[4]
+				rawCommand = append(rawCommand, args[3], args[4])
+
 				if strings.ToUpper(flag) == "PX" {
 					isDeadlineMillis = true
 				} else if strings.ToUpper(flag) == "MX" {
@@ -148,8 +161,10 @@ func handleConn(conn net.Conn) {
 					fmt.Printf("Error while parsing deadline: %s\n", deadline)
 					break
 				}
+				store.Cache.WriteToAOF(rawCommand)
 				commands.HandleSET(conn, key, value, expiry, isDeadlineMillis)
 			} else {
+				store.Cache.WriteToAOF(rawCommand)
 				commands.HandleSET(conn, key, value, -1, false)
 
 			}
