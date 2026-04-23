@@ -13,6 +13,7 @@ echo:
 # 3. String & Expiry Tests
 set:
 	redis-cli SET foo bar
+	redis-cli SET barz getz
 
 get:
 	redis-cli GET foo
@@ -82,5 +83,7 @@ get-config:
 	redis-cli CONFIG GET appendfilename
 	redis-cli CONFIG GET appendfsync
 
+persis-run:
+	./your_program.sh --dir data --appendonly yes --appenddirname backup --appendfilename backup.aof --appendfsync always
 test-all: set set-expiry-millis rpush rpush-multi lrange-pos lrange-neg lpush llen lpop n_lpop blpop type xadd
 	@echo "✅ All manual tests triggered."

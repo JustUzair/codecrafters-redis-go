@@ -456,11 +456,12 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 	defer s.mu.Unlock()
 	s.Config = config
 	// If appendonly is enabled, we need to create the appendonlydir and the first aof file if they don't exist
-	fmt.Println("s.Config.Appendonly", s.Config.Appendonly)
-	fmt.Println("s.Config.Appenddirname", s.Config.Appenddirname)
+	// fmt.Println("s.Config.Appendonly", s.Config.Appendonly)
+	// fmt.Println("s.Config.Appenddirname", s.Config.Appenddirname)
 
 	if s.Config.Appendonly {
 		dirPath := filepath.Join(s.Config.Dir, s.Config.Appenddirname)
+		manifestPath := filepath.Join(dirPath, fmt.Sprintf("%s.manifest", s.Config.Appendfilename))
 		err := os.MkdirAll(dirPath, 0755)
 		if err != nil {
 			return false, err
@@ -470,9 +471,14 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		fileSeq := len(files) + 1
+		var fileSeq int
+		if len(files) >= 2 {
+			fileSeq = len(files)
+		} else {
+
+			fileSeq = len(files) + 1
+		}
 		fileName := fmt.Sprintf("%s.%d.incr.aof", s.Config.Appendfilename, fileSeq)
-		manifestPath := filepath.Join(dirPath, fmt.Sprintf("%s.manifest", s.Config.Appendfilename))
 		filePath := filepath.Join(dirPath, fileName)
 		// fmt.Println("here")
 
