@@ -2,6 +2,7 @@ package store
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
-	"github.com/codecrafters-io/redis-starter-go/app/lib/commands/router"
 )
 
 func (s *Storage[T]) Set(key string, value T, expiry int64, isDeadlineMillis bool) {
@@ -455,10 +455,11 @@ func (s *Storage[T]) ConfigGet(option string) ([]string, error) {
 	return res, nil
 }
 
-func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
+func (s *Storage[T]) ConfigSet(config Config, replayHandler func(io.Writer, []string)) (bool, error) {
+
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.Config = config
+	s.mu.Unlock()
 	// If appendonly is enabled, we need to create the appendonlydir and the first aof file if they don't exist
 	// fmt.Println("s.Config.Appendonly", s.Config.Appendonly)
 	// fmt.Println("s.Config.Appenddirname", s.Config.Appenddirname)
@@ -487,7 +488,7 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 
 			if len(args) > 0 {
 				fmt.Println(args)
-				router.HandleCommand(io.Discard, args)
+				replayHandler(io.Discard, args)
 			}
 
 		}
@@ -580,19 +581,8 @@ func (s *Storage[T]) ReadFromAOF() (*bufio.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	buffReader := bufio.NewReader(file)
-	// var respString string
-
-	// for buffReader.Scan() {
-	// 	fmt.Println(buffScanner.Text()) // Print current
-	// 	respString += buffScanner.Text()
-	// }
-	return buffReader, nil
+	data, err := os.ReadFile(path)
+	return bufio.NewReader(bytes.NewReader(data)), nil
 }
 
 func (s *Storage[T]) AOFExists() bool {

@@ -48,6 +48,7 @@ func main() {
 	// fmt.Println("%v", config)
 	store.Cache.ConfigSet(
 		config,
+		router.HandleCommand,
 	)
 
 	// ------- End of AOF Config Flags -------
