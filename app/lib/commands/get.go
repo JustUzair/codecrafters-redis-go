@@ -2,12 +2,12 @@ package commands
 
 import (
 	"fmt"
-	"net"
+	"io"
 
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func HandleGET(conn net.Conn, key string) {
+func HandleGET(conn io.Writer, key string) {
 	val, err := store.Cache.Get(key)
 	if err != nil {
 		conn.Write([]byte("$-1\r\n"))

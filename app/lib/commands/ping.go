@@ -1,9 +1,7 @@
 package commands
 
-import (
-	"net"
-)
+import "io"
 
-func HandlePING(conn net.Conn) {
+func HandlePING(conn io.Writer) {
 	conn.Write([]byte("+PONG\r\n"))
 }

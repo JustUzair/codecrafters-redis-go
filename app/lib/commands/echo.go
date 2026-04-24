@@ -2,9 +2,9 @@ package commands
 
 import (
 	"fmt"
-	"net"
+	"io"
 )
 
-func HandleECHO(conn net.Conn, val string) {
+func HandleECHO(conn io.Writer, val string) {
 	conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)))
 }

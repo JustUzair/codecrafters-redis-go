@@ -2,13 +2,13 @@ package commands
 
 import (
 	"fmt"
-	"net"
+	"io"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func HandleXRANGE(conn net.Conn, list_key string, start string, stop string) {
+func HandleXRANGE(conn io.Writer, list_key string, start string, stop string) {
 	res, err := store.Cache.XRange(list_key, start, stop)
 	if err != nil {
 		conn.Write([]byte("*0\r\n")) // Return empty array if not found

@@ -1,16 +1,20 @@
 package store
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
+	"github.com/codecrafters-io/redis-starter-go/app/lib/commands/router"
 )
 
 func (s *Storage[T]) Set(key string, value T, expiry int64, isDeadlineMillis bool) {
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	// Never expires
@@ -471,6 +475,24 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 		if err != nil {
 			return false, err
 		}
+		// ------------ Replay Logic -------------
+		if config.Appendonly && s.AOFExists() {
+			buffReader, err := s.ReadFromAOF()
+			if err != nil {
+				fmt.Printf("\n%v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println("Inside backup replay")
+			args, err := lib.UnmarshalRESP(buffReader)
+
+			if len(args) > 0 {
+				fmt.Println(args)
+				router.HandleCommand(io.Discard, args)
+			}
+
+		}
+		// -------------
+
 		var fileSeq int
 		if len(files) >= 2 {
 			fileSeq = len(files)
@@ -496,15 +518,15 @@ func (s *Storage[T]) ConfigSet(config Config) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("manifest file write error: %w", err)
 		}
-		// fmt.Println("Inside store utils %d", n)
+		// fmt.Println("Inside store %d", n)
 
 		file.Close()
 		manifestFile.Close()
 
 	}
 	return true, nil
-}
 
+}
 func (s *Storage[T]) GetActiveAOFPath() (string, error) {
 	// dir + dir_name + file_name.manifest
 	manifestPath := filepath.Join(s.Config.Dir, s.Config.Appenddirname, s.Config.Appendfilename+".manifest")
@@ -551,4 +573,38 @@ func (s *Storage[T]) WriteToAOF(commandArgs []any) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (s *Storage[T]) ReadFromAOF() (*bufio.Reader, error) {
+	path, err := s.GetActiveAOFPath()
+	if err != nil {
+		return nil, err
+	}
+	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	buffReader := bufio.NewReader(file)
+	// var respString string
+
+	// for buffReader.Scan() {
+	// 	fmt.Println(buffScanner.Text()) // Print current
+	// 	respString += buffScanner.Text()
+	// }
+	return buffReader, nil
+}
+
+func (s *Storage[T]) AOFExists() bool {
+	dirPath := filepath.Join(s.Config.Dir, s.Config.Appenddirname)
+	// manifestPath := filepath.Join(dirPath, fmt.Sprintf("%s.manifest", s.Config.Appendfilename))
+
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		return false
+	}
+	if len(files) >= 2 {
+		return true
+	}
+	return false
 }

@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"net"
+	"io"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func HandleCONFIG_GET(conn net.Conn, option string) {
+func HandleCONFIG_GET(conn io.Writer, option string) {
 	temp, err := store.Cache.ConfigGet(option)
 	res := make([]any, len(temp))
 	for i, v := range temp {

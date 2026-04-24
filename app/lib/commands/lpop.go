@@ -2,13 +2,13 @@ package commands
 
 import (
 	"fmt"
-	"net"
+	"io"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func HandleLPOP(conn net.Conn, list_key string, n_pop int) {
+func HandleLPOP(conn io.Writer, list_key string, n_pop int) {
 	elements, err := store.Cache.LPop(list_key, n_pop)
 	if err != nil {
 		conn.Write([]byte("$-1\r\n"))

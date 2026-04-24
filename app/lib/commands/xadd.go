@@ -2,13 +2,13 @@ package commands
 
 import (
 	"fmt"
-	"net"
+	"io"
 
 	"github.com/codecrafters-io/redis-starter-go/app/lib"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func HandleXADD(conn net.Conn, list_key string, id string, fields []store.Field) {
+func HandleXADD(conn io.Writer, list_key string, id string, fields []store.Field) {
 	ok, id, err := store.Cache.XAdd(list_key, id, fields)
 	if !ok && err != nil {
 		conn.Write([]byte(lib.MarshalErrorRESP(err.Error())))
