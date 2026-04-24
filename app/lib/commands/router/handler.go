@@ -26,11 +26,13 @@ func HandleCommand(conn io.Writer, args []string) {
 		list_key := args[1]
 		values := args[2:]
 		rawCommand = append(rawCommand, list_key, values)
+		store.Cache.WriteToAOF(rawCommand)
 		commands.HandleRPUSH(conn, list_key, values)
 	case "LPUSH":
 		list_key := args[1]
 		values := args[2:]
 		rawCommand = append(rawCommand, list_key, values)
+		store.Cache.WriteToAOF(rawCommand)
 		commands.HandleLPUSH(conn, list_key, values)
 	case "LRANGE":
 		list_key := args[1]
@@ -55,6 +57,8 @@ func HandleCommand(conn io.Writer, args []string) {
 				break
 			}
 		}
+		rawCommand = append(rawCommand, list_key, n_pop)
+		store.Cache.WriteToAOF(rawCommand)
 		commands.HandleLPOP(conn, list_key, n_pop)
 
 	case "BLPOP":
@@ -64,6 +68,8 @@ func HandleCommand(conn io.Writer, args []string) {
 			fmt.Printf("Invalid argument for number of elements to pop")
 			break
 		}
+		rawCommand = append(rawCommand, list_key, timeout)
+		store.Cache.WriteToAOF(rawCommand)
 		commands.HandleBLPOP(conn, list_key, timeout)
 	case "SET":
 		key := args[1]

@@ -483,12 +483,17 @@ func (s *Storage[T]) ConfigSet(config Config, replayHandler func(io.Writer, []st
 				fmt.Printf("\n%v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println("Inside backup replay")
-			args, err := lib.UnmarshalRESP(buffReader)
 
-			if len(args) > 0 {
-				fmt.Println(args)
-				replayHandler(io.Discard, args)
+			for {
+				args, err := lib.UnmarshalRESP(buffReader)
+				if err != nil {
+					break
+				}
+
+				if len(args) > 0 {
+					fmt.Println(args)
+					replayHandler(io.Discard, args)
+				}
 			}
 
 		}
