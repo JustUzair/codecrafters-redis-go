@@ -485,6 +485,7 @@ func (s *Storage[T]) ConfigSet(config Config, replayHandler func(io.Writer, []st
 			}
 
 			for {
+				// Read multiple commands, unmarshal and replay
 				args, err := lib.UnmarshalRESP(buffReader)
 				if err != nil {
 					break
