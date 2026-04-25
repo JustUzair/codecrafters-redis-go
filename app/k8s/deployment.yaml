@@ -35,11 +35,11 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           volumeMounts:
-            - name: www # This MUST match the name in volumeClaimTemplates
+            - name: backup # This MUST match the name in volumeClaimTemplates
               mountPath: /app/data # This is where the folder appears in your Go app
   volumeClaimTemplates:
     - metadata:
-        name: www
+        name: backup
       spec:
         accessModes: ["ReadWriteOnce"]
         storageClassName: standard
