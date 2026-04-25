@@ -18,6 +18,7 @@ var appendOnly *string
 var appendDir *string
 var appendFile *string
 var appendFsync *string
+var dbfilename *string
 
 func main() {
 	//  ------- AOF Config Flags -------
@@ -35,6 +36,7 @@ func main() {
 	appendDir = flag.String("appenddirname", store.Cache.Config.Appenddirname, "Directory name for AOF")
 	appendFile = flag.String("appendfilename", store.Cache.Config.Appendfilename, "Filename for AOF")
 	appendFsync = flag.String("appendfsync", store.Cache.Config.Appendfsync, "Fsync policy")
+	dbfilename = flag.String("dbfilename", store.Cache.Config.Dbfilename, "RDB filename")
 
 	flag.Parse()
 

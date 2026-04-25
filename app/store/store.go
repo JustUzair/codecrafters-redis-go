@@ -34,6 +34,7 @@ type Config struct {
 	Appendonly     bool
 	Appendfilename string
 	Appendfsync    string
+	Dbfilename     string
 }
 
 //---------------------------------------------------------//

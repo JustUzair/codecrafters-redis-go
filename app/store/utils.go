@@ -448,6 +448,8 @@ func (s *Storage[T]) ConfigGet(option string) ([]string, error) {
 		res = append(res, "appendfilename", s.Config.Appendfilename)
 	case "appendfsync":
 		res = append(res, "appendfsync", s.Config.Appendfsync)
+	case "dbfilename":
+		res = append(res, "dbfilename", s.Config.Dbfilename)
 	default:
 		return nil, fmt.Errorf("Invalid option")
 	}

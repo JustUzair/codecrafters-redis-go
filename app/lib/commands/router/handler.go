@@ -147,7 +147,7 @@ func HandleCommand(conn io.Writer, args []string) {
 		option := args[2]
 		if subCommand == "GET" {
 			// CONFIG GET
-			if option == "dir" || option == "appendonly" || option == "appenddirname" || option == "appendfilename" || option == "appendfsync" {
+			if option == "dir" || option == "appendonly" || option == "appenddirname" || option == "appendfilename" || option == "appendfsync" || option == "dbfilename" {
 				commands.HandleCONFIG_GET(conn, option)
 			} else {
 				fmt.Printf("Invalid option: %s\n", option)
